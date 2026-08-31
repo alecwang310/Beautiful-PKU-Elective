@@ -2,7 +2,7 @@
 // @name         Beautiful PKU Elective
 // @namespace    beautiful.pku.elective.v1
 // @version      0.1.0
-// @description  Modern UI for elective.pku.edu.cn
+// @description  Modern UI for elective.pku.edu.cn — header first, cards/forms next
 // @author       Alecwang (https://github.com/alecwang310)
 // @license      MIT
 // @match        https://elective.pku.edu.cn/*
@@ -218,7 +218,7 @@
         align-items: stretch !important;
         position: sticky !important;
         top: 0 !important;
-        z-index: 1000 !important;
+        z-index: 10000 !important;
         background: ${C.headerBg} !important;
         border-bottom: 1px solid ${C.faintLine} !important;
       }
@@ -313,13 +313,12 @@
     .pku-section-headline, .pku-section-headline * { color: ${C.text} !important; }
     /* the sticky title strip: plain page background, pinned under the nav.
        It must stay opaque so table rows do not show through as they pass.
-       Its layer sits just under the pager (900) and just over the column
-       headers (880), so -- like the headers -- it slides under the opaque
-       pager and its stickiness ends at the last data row, not over 第 x 页. */
+       Its stickiness ends where its wrapper does -- at the last data row, just
+       above the pager -- so it scrolls up there rather than riding over it. */
     .pku-section-headline {
       position: sticky !important;
       top: var(--pku-stick-top, 0px) !important;
-      z-index: 890 !important;
+      z-index: 1100 !important;  /* highest: above the nav, toolbar and table */
       display: flex !important;
       align-items: baseline !important;
       flex-wrap: wrap !important;
@@ -599,7 +598,12 @@
       font-size: 12px !important;
       color: ${C.noteText} !important;
     }
-    .pku-cache--done { display: none !important; }
+    /* the bar stays for the whole session; only the status text changes */
+    .pku-cache-status {
+      font-size: 12px !important;
+      white-space: nowrap !important;
+    }
+    .pku-cache--done .pku-cache-status { color: ${C.text} !important; }
     .pku-cache-track {
       display: flex !important;
       gap: 3px !important;
@@ -830,15 +834,14 @@
     .pku-footer a:hover { text-decoration: underline !important; }
 
     /* ---- pager ---- */
-    /* The pager is the grid's last ROW, so the sticky column header -- which
-       stays pinned for as long as its table is on screen -- would ride down
-       over it and hide 第 x 页 / 共 x 页 at the bottom of a long list. Lifting
-       the pager above the header's layer ends the header at the last data row,
-       which is where it should stop: the pager is opaque, so the header slides
-       under it and out of sight exactly as the table runs out. */
-    table.datagrid td.pku-pager-cell {
+    /* The pager is a block below the table, not a row inside it, so the table
+       (and the section wrapper around it) ends at the last data row. Its layer
+       still sits above the sticky column header (880) and is opaque, so the
+       header slides under it and out of sight exactly as the table runs out. */
+    .pku-pager-cell {
       position: relative !important;
       z-index: 900 !important;   /* over the header row's 880 */
+      box-sizing: border-box !important;
       padding: 12px 10px !important;
       border-top: 1px solid ${C.gridLine} !important;
       background: #fff !important;
@@ -1092,7 +1095,14 @@
       background: ${C.warnClash} !important;
       color: ${C.warnClashText} !important;
     }
-    
+    /* a folded leader keeps its blue even when it is also flagged clash/credit;
+       the extra class wins over the single warning class on specificity */
+    table.datagrid tr.pku-f-name.pku-clash > td,
+    table.datagrid tr.pku-f-name.pku-over-credit > td {
+      background: ${C.rowFolded} !important;
+      color: ${C.text} !important;
+    }
+
     table.datagrid tr.pku-clash a,
     table.datagrid tr.pku-over-credit a {
       color: ${C.courseLink} !important;
@@ -1194,6 +1204,10 @@
       font-size: 13px !important;
     }
 
+    /* the site's own 课程表 (the inline one kept on 选课结果) pads every cell 5px
+       left via its .course class; trim it to near nothing like the floating one */
+    #classAssignment .course { padding-left: 2px !important; }
+
     /* ---- floating timetable ----
        The site's 学期课程表 rebuilt as a floating window: a light-blue sliver of
        weekday headings across the top, bare period numerals down the side, and
@@ -1269,10 +1283,14 @@
       white-space: nowrap !important;
     }
     /* Text is laid out once at the grid's font size and only ever scaled DOWN
-       to fit its cell, so a cramped cell loses size rather than re-wrapping. */
+       to fit its cell, so a cramped cell loses size rather than re-wrapping.
+       width:max-content keeps the box hugging its text, so the scale-down is
+       centred on the text and does not leave a full-width sliver of dead space
+       either side. */
     .pku-tt-fit {
-      width: 100% !important;
-      padding: 2px 3px !important;
+      width: max-content !important;
+      flex: none !important;          /* don't let flexbox squeeze it back down */
+      padding: 2px 2px !important;
       box-sizing: border-box !important;
       text-align: center !important;
       overflow-wrap: anywhere !important;
@@ -1283,7 +1301,7 @@
        is inset so it reads as a divider inside the cell, not a grid line */
     .pku-tt-sep {
       width: 55% !important;
-      margin: 3px auto !important;
+      margin: 1px auto !important;
       border-top: 1px solid currentColor !important;
       opacity: .45 !important;
     }
@@ -1291,7 +1309,7 @@
     /* the drag bar down the right edge, with the fold chevron at its top */
     .pku-tt-bar {
       flex: none !important;
-      width: 22px !important;   /* wide enough to grab without aiming */
+      width: 30px !important;   /* wide enough to grab without aiming */
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
@@ -1309,8 +1327,8 @@
     .pku-tt-grip { cursor: nesw-resize !important; }
     .pku-tt-chev {
       flex: none !important;
-      width: 16px !important;
-      height: 16px !important;
+      width: 28px !important;   /* large, forgiving click target */
+      height: 28px !important;
       padding: 0 !important;
       display: flex !important;
       align-items: center !important;
@@ -1321,9 +1339,12 @@
       color: ${C.text} !important;
     }
     /* points at the edge the table will travel to: right to shut it into the
-       bar, left to pull it back out */
+       bar, left to pull it back out. The pivot sits inside the V, half way
+       between the box centre and the tip, so the two states hinge about the
+       same point without swinging the glyph out to the edge. */
     .pku-tt-chev .pku-chev {
       transform: rotate(-45deg) !important;
+      transform-origin: 65% 65% !important;
       transition: transform .24s ease !important;
     }
     .pku-tt--shut .pku-tt-chev .pku-chev { transform: rotate(135deg) !important; }
@@ -1703,7 +1724,7 @@
     const cnum = document.createElement('input');
     cnum.type = 'number';
     cnum.min = '0';
-    cnum.step = '0.5';
+    cnum.step = '1';
     // credit ceiling, remembered across page changes so a navigation does not
     // silently reset it back to the default
     let savedCredit = null;
@@ -1722,7 +1743,7 @@
     const legend = document.createElement('div');
     legend.className = 'pku-search-legend';
     legend.textContent =
-      '红色代表该课程时间与已经预选课程时间冲突，黄色代表时间不冲突但选择后学分将超出学分上限';
+      '红色代表该课程时间与已经预选课程时间冲突，黄色代表时间不冲突但选择后学分将超出学分上限。颜色仅做参考，请以点击预选后的信息提示为准';
     bar.appendChild(legend);
 
     // buttons + filter toggle, one row
@@ -1842,10 +1863,12 @@
     // ---- cross-page cache + progress ----
     const cache = document.createElement('div');
     cache.className = 'pku-cache';
-    const cacheLabel = document.createElement('span');
     const track = document.createElement('div');
     track.className = 'pku-cache-track';
-    cache.append(cacheLabel, track);
+    const cacheLabel = document.createElement('span');
+    cacheLabel.className = 'pku-cache-status';
+    cacheLabel.textContent = '正在建立缓存';
+    cache.append(track, cacheLabel);
     bar.appendChild(cache);
 
     // ---- live search and filtering ----
@@ -1906,10 +1929,9 @@
         seg.classList.toggle('pku-cache-seg--err', ok === 'error');
       });
       const loaded = st.pages.filter((x) => x === true).length;
-      cacheLabel.textContent = loaded >= st.total
-        ? '全部 ' + st.total + ' 页已载入'
-        : '正在载入其余页面 ' + loaded + '/' + st.total;
-      if (loaded >= st.total) setTimeout(() => cache.classList.add('pku-cache--done'), 1200);
+      const done = loaded >= st.total;
+      cacheLabel.textContent = done ? '缓存建立成功' : '正在建立缓存';
+      cache.classList.toggle('pku-cache--done', done);
       run();
     };
 
@@ -2120,20 +2142,18 @@
         (sel.closest('form') || sel).remove();
       }
 
-      const cell = document.createElement('td');
-      cell.className = 'pku-pager-cell';
-      cell.colSpan = 99;
-      cell.appendChild(bar);
-      const row = document.createElement('tr');
-      row.className = 'pku-pager-row';
-      row.dataset.pkuPager = '1';
-      row.appendChild(cell);
+      const host = document.createElement('div');
+      host.className = 'pku-pager-cell';
+      host.appendChild(bar);
 
-      textRow.parentNode.insertBefore(row, textRow);
+      // the pager is a sibling of the table, not a row inside it, so the table
+      // (and the section wrapper around it) ends at the last data row. On a
+      // re-run after 预选 the wrapper already exists, so park the pager after it.
+      (grid.closest('.pku-section-body') || grid).after(host);
       textRow.remove();
       // a leftover row that only held the select is now empty
       [...grid.querySelectorAll('tr')].forEach((tr) => {
-        if (tr !== row && !tr.textContent.trim() && !tr.querySelector('input, select, a')) {
+        if (!tr.textContent.trim() && !tr.querySelector('input, select, a')) {
           tr.remove();
         }
       });
@@ -2475,24 +2495,90 @@
     return url.toString();
   }
 
-  // Fetches every page except the one already loaded, reporting progress.
+  // The built cache is parked in sessionStorage so switching pages (a full
+  // reload that just changes netui_row) reuses it instead of re-fetching the
+  // whole list again.
+  const CACHE_STORE_KEY = 'pku-elective-page-cache';
+
+  // The list the cache belongs to: the page URL without the paging offset, so
+  // every page of the same list reads as one view.
+  function cacheViewKey() {
+    const url = new URL(location.href);
+    url.searchParams.delete('netui_row');
+    return url.pathname + url.search;
+  }
+
+  function persistPageCache(total, pages) {
+    try {
+      sessionStorage.setItem(CACHE_STORE_KEY, JSON.stringify({
+        view: cacheViewKey(), total, pages,
+      }));
+    } catch (e) {}
+  }
+
+  // Re-adopts the stored rows for every page except the one now on screen
+  // (whose native rows are already in the grid). Returns true when a matching
+  // cache was found, so the caller skips the fetch pass entirely.
+  function restorePageCache(grid, cur) {
+    let stored;
+    try { stored = JSON.parse(sessionStorage.getItem(CACHE_STORE_KEY) || 'null'); }
+    catch (e) { return false; }
+    if (!stored || stored.view !== cacheViewKey()) return false;
+
+    const model = GRID_MODEL.get(grid);
+    if (!model) return false;
+    const body = model.rows.length ? model.rows[0].tr.parentNode : grid.tBodies[0];
+    if (!body) return false;
+
+    Object.entries(stored.pages || {}).forEach(([i, htmls]) => {
+      if (Number(i) === cur) return;
+      (htmls || []).forEach((html) => {
+        const tmp = document.createElement('tbody');
+        tmp.innerHTML = html;
+        const tr = tmp.firstElementChild;
+        if (!tr) return;
+        const rec = adoptForeignRow(tr, model, Number(i));
+        if (rec) {
+          body.appendChild(tr);
+          model.rows.push(rec);
+          PAGE_CACHE.rows.push(rec);
+        }
+      });
+    });
+    return true;
+  }
+
+  // Fetches every page and reports progress.
   async function buildPageCache(grid, onProgress) {
     const info = pagerPages();
     if (!info) return false;
     const { opts, cur } = info;
+
+    // a cache built earlier this session for this same list: reuse it
+    if (restorePageCache(grid, cur)) {
+      PAGE_CACHE.total = opts.length;
+      PAGE_CACHE.done = opts.length;
+      PAGE_CACHE.pages = opts.map(() => true);
+      onProgress(PAGE_CACHE);
+      return true;
+    }
 
     PAGE_CACHE.total = opts.length;
     PAGE_CACHE.done = 1;                 // the page we are on is already here
     PAGE_CACHE.pages = opts.map((_, i) => i === cur);
     onProgress(PAGE_CACHE);
 
+    const store = {};
     for (let i = 0; i < opts.length; i++) {
-      if (i === cur) continue;
+      // human-ish pacing with a little jitter, so a burst of page fetches does
+      // not read as a scraper
+      await new Promise((r) => setTimeout(r, 300 + (Math.random() * 100 - 50)));
       try {
         const res = await fetch(pageUrl(opts, i), { credentials: 'same-origin' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-        adoptPage(grid, doc, i);
+        store[i] = readPageRows(doc, grid);
+        if (i !== cur) adoptPage(grid, doc, i);
         PAGE_CACHE.pages[i] = true;
       } catch (e) {
         console.warn('[Beautiful PKU Elective] page', i + 1, 'not cached:', e.message);
@@ -2501,7 +2587,18 @@
       PAGE_CACHE.done++;
       onProgress(PAGE_CACHE);
     }
+    persistPageCache(opts.length, store);
     return true;
+  }
+
+  // Raw HTML of a fetched page's data rows, for parking in the cross-page cache.
+  function readPageRows(doc, grid) {
+    const model = GRID_MODEL.get(grid);
+    const src = doc.querySelector('table.datagrid');
+    if (!model || !src) return [];
+    return [...src.rows]
+      .filter((tr) => !tr.querySelector('th') && tr.children.length >= model.shape.colCount)
+      .map((tr) => tr.outerHTML);
   }
 
   // Pulls the data rows out of a fetched page and rebuilds each one to match
@@ -2818,9 +2915,13 @@
     });
   }
 
+  // Width Scheduling is here
   function enhanceGrid(grid, opts) {
     const { fold = false, groupRules = false } = opts || {};
     const head = headerCells(grid);
+    console.log("enchance grid")
+    console.log(head.row);
+    console.log("------------")
     if (!head) return 0;
     head.row.classList.add('pku-head-row');
     // the footer row carries the same legacy blue; let it inherit the page
@@ -2995,9 +3096,6 @@
     return controls;
   }
 
-  // Column widths: every column gets at least 1/30 of the table and at least
-  // one character, headers never wrap, and the rest is shared out by how much
-  // text each column actually holds.
   // A CJK glyph occupies about a full em, Latin and digits about half, so text
   // length in characters is a poor width proxy: 开课单位 needs roughly twice the
   // room of a four-letter word. Measure in ems instead.
@@ -3006,12 +3104,6 @@
     for (const ch of str) em += /[\u2e80-\uffef]/.test(ch) ? 1 : 0.55;
     return em;
   }
-
-  // COL_FIXED_EM / COL_FLOOR_EM / COL_CAP_EM used to live here: a pinned
-  // width for 课程名, hand-tuned floors, and a per-column cap for 开课单位.
-  // All three were patches for sizing to the longest entry, which the width
-  // rule no longer does -- the outliers those tables existed to contain are
-  // now simply outside the percentile.
 
   // These columns are folded into a single horizontally scrolling pane, so the
   // identity and action columns stay put while the detail columns scroll.
@@ -3188,10 +3280,13 @@
   // and those few wrap instead.
   const COL_KEEP = 0.85;    // width covering all but the top 15%
   const COL_WIDE = 0.20;    // a column past this share of the table is reduced
+  const COL_NARROW = 0.05;  // a column below this share of the table is multiplied with short_field_multiply to prevent it from being reduced as much
   const COL_WIDE_K = 0.65;  // ...to this much of itself, so long text folds
   const COL_HEAD_K = 1.5;   // never narrower than 1.5x its own heading
   const COL_NOTE_K = 0.5;   // 备注 is always half its own W, however wide
-  const COL_HOLD = { '课程号': 3 };   // gives up width 3x more grudgingly
+  const COL_HOLD = { '课程号': 1000 };   // gives up width 3x more grudgingly
+  const SHORT_FIELD_MULTIPLY = 1000; // multiplys fields below 5% to stop super short fields from folding
+  const COL_CODES = ['课程号', '课程班号'];   // class-code columns never fold
 
   // What one cell needs is its longest LINE, not the sum of its text: a cell
   // listing three meetings on three lines is only as wide as the widest one.
@@ -3205,6 +3300,31 @@
       if (t) best = Math.max(best, textEm(t));
     });
     return best;
+  }
+
+  // The longest line of a cell, as text -- used to decide how many lines a
+  // column may fold into. Mirrors cellEm but returns the string, not its ems.
+  function cellText(td) {
+    if (!td) return '';
+    let best = '';
+    (td.innerHTML || '').split(/<br\s*\/?>/i).forEach((frag) => {
+      const box = document.createElement('div');
+      box.innerHTML = frag;
+      const t = box.textContent.replace(/\s+/g, ' ').trim();
+      if (t.length > best.length) best = t;
+    });
+    return best;
+  }
+
+  // How many lines a column may fold into. Numeric and very short fields stay
+  // on one line; the rest may fold to two. Only the cell values decide -- the
+  // header text is never consulted here.
+  function columnTarget(label, texts) {
+    if (COL_CODES.includes(label)) return 1;
+    if (texts.length && texts.every((t) => /^[\d./\s]+$/.test(t))) return 1;
+    const longest = texts.reduce((m, t) => Math.max(m, t.length), 0);
+    if (longest <= 4) return 1;
+    return 2;
   }
 
   // The width that covers all but the longest few entries. Under five entries
@@ -3224,9 +3344,13 @@
       const gutter = th.classList.contains('pku-foldcell');
       const label = gutter ? '' : headText(th);
       const vals = [];
+      const texts = [];
       bodyRows.forEach((r) => {
-        const e = cellEm(r.tr ? r.tr.children[c] : r.children[c]);
+        const td = r.tr ? r.tr.children[c] : r.children[c];
+        const e = cellEm(td);
         if (e) vals.push(e);
+        const t = cellText(td);
+        if (t) texts.push(t);
       });
       // Headings are allowed to wrap, so this is not "fit the heading on one
       // line" -- it is a floor that keeps a column with terse values from
@@ -3235,6 +3359,7 @@
         label,
         gutter,
         w: Math.max(keepEm(vals), textEm(label) * COL_HEAD_K),
+        target: columnTarget(label, texts),
       };
     });
   }
@@ -3293,10 +3418,11 @@
     cells.forEach((th, i) => {
       if (th.classList.contains('pku-foldcell')) return;
       if (th.classList.contains('pku-scrollcell')) {
-        cols.push({ th, pane: true, label: '', w: pane.w, hold: 1 });
+        cols.push({ th, pane: true, label: '', w: pane.w, hold: 1, target: 2 });
       } else {
         const m = measured[pane && i > pane.at ? i + pane.span - 1 : i];
-        cols.push({ th, pane: false, label: m ? m.label : '', w: m ? m.w : 4, hold: 1 });
+        cols.push({ th, pane: false, label: m ? m.label : '', w: m ? m.w : 4,
+                    hold: 1, target: m ? m.target : 1 });
       }
     });
     if (!cols.length) return;
@@ -3309,9 +3435,13 @@
     // possible: cutting them again is what makes rows grow ultra tall.
     cols.forEach((c) => {
       c.hold = COL_HOLD[c.label] || 1;
+      if (c.hold == 1 && c.w < COL_NARROW) {c.hold = SHORT_FIELD_MULTIPLY; }
+      const W = c.w;                       // measured width, pre-reduction
       if (c.w > COL_WIDE * room) { c.w *= COL_WIDE_K; c.reduced = true; }
       c.full = c.w;
-      c.min = c.reduced ? c.w : c.w * COL_WIDE_K;
+      // the floor is the width that fits on `target` lines (with 10% headroom);
+      // a one-line column therefore refuses to shrink at all
+      c.min = (W * 1.1) / (c.target || 1);
     });
     // the pane may shrink until its first column is fully in view -- past that
     // there is nothing left to read without scrolling
@@ -3361,7 +3491,7 @@
     });
 
     cells.forEach((th) => {
-      if (th.classList.contains('pku-scrollcell')) return;
+      if (th.classList.contains('pku-dscrollcell')) return;
       if (!th.querySelector('.pku-head')) {
         const box = document.createElement('span');
         box.className = 'pku-head';
@@ -3521,9 +3651,9 @@
     if (!hiddenRows.length) return;
 
     const norm = (el) => el.textContent.replace(/[\s\u00a0]+/g, " ").trim();
-    const mark = (cell, others) => {
+    const mark = (cell, others, force) => {
       const base = norm(cell);
-      if (!others.some((o) => o && norm(o) !== base)) return;
+      if (!force && !others.some((o) => o && norm(o) !== base)) return;
       cell.setAttribute("data-pku-orig", cell.innerHTML);
       cell.innerHTML = '<span class="pku-cell pku-folded-mark">\u5df2\u6298\u53e0</span>';
     };
@@ -3541,6 +3671,15 @@
         innerOf(mine).forEach((cell, k) => {
           mark(cell, hiddenRows.map((r) => innerOf(r.tr.children[c])[k]));
         });
+        continue;
+      }
+
+      // 意愿值 (the per-row input) and the 预选/删除 action are row-specific:
+      // the leader's own value/action does not stand for the folded rows, so
+      // they always read 已折叠 rather than silently showing one row's.
+      if (mine.querySelector('input') ||
+          mine.querySelector('a[href*="electCourse.do"], a[href*="cancelCourse.do"]')) {
+        mark(mine, [], true);
         continue;
       }
 
@@ -3606,8 +3745,10 @@
       // Both go straight into the grid's cell, in order, so the title's sticky
       // containing block is that cell and it stays pinned for the whole table.
       cell.prepend(line);
+      let toolbar = null;
       if (!built) {
-        line.after(buildToolbar(grid));
+        toolbar = buildToolbar(grid);
+        line.after(toolbar);
         tookActions = true;
       }
 
@@ -3622,6 +3763,17 @@
       } else {
         titleRow.remove();
       }
+
+      // Wrap the title, toolbar and table in one block so the title's sticky
+      // containing block ends at the last data row -- above the pager, which
+      // now lives outside the table -- and the title scrolls up right there.
+      const body = document.createElement('div');
+      body.className = 'pku-section-body';
+      body.appendChild(line);
+      if (toolbar) body.appendChild(toolbar);
+      body.appendChild(grid);
+      cell.prepend(body);
+
       built++;
     });
 
