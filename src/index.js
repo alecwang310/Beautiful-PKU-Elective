@@ -14,7 +14,7 @@ const STYLES = [
 GM_addStyle(STYLES);
 
 import {
-  COL, findCol, parseInfoCell, headerCells, headText, cellText,
+  COL, NOTE_HEAD, findCol, parseInfoCell, headerCells, headText, cellText,
   dropLegacyRowStyling, slotsClash, DEFAULT_CREDIT_LIMIT,
   setLastOpCourse, consumeLastOpCourse, takeNavState, readCreditInfo,
   creditInfoText, reinsertRemainRandom, syncCreditInfo,

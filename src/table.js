@@ -16,7 +16,10 @@ export const COL = {
   name: ['课程名', '课程名称'],
   teacher: ['教师'],
   info: ['上课/考试信息', '上课时间', '教室信息'],
+  note: ['备注'],
 };
+
+export const NOTE_HEAD = '备注';
 
 export const FILTER_COLS = {
   '课程类别': ['课程类别'],
