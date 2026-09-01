@@ -9,7 +9,7 @@
 // a cached row's link would act on whatever occupies that index here, so the
 // action cell is replaced with a link to the page the row lives on.
 
-import { CACHE_STORE_KEY, ALL_ROWS } from '../config.js';
+import { CACHE_STORE_KEY, LAST_VIEW_KEY, ALL_ROWS } from '../config.js';
 import { state } from '../state.js';
 import { parseInfoCell, dropLegacyRowStyling, captureRowValues } from './table.js';
 
@@ -64,6 +64,24 @@ function persistPageCache(total, pages) {
       view: cacheViewKey(), total, pages,
     }));
   } catch (e) {}
+}
+
+// ---- when the cache is (re)built ----
+// The stored cache is keyed by the list it was read from, so walking between
+// the server pages of one list reuses it and nothing is re-fetched. Leaving
+// that list is different: while the user was on 选课结果 or 补退选 a class can
+// fill up, and the 预选 they just made is not in the cached pages at all. So
+// every page load records which list it is, and a load that finds a DIFFERENT
+// list recorded -- i.e. the user has been elsewhere and come back -- throws
+// the stored cache away, which makes buildPageCache fetch every page again.
+export function dropPageCacheOnReentry() {
+  const now = cacheViewKey();
+  let last = null;
+  try { last = sessionStorage.getItem(LAST_VIEW_KEY); } catch (e) {}
+  if (last !== null && last !== now) {
+    try { sessionStorage.removeItem(CACHE_STORE_KEY); } catch (e) {}
+  }
+  try { sessionStorage.setItem(LAST_VIEW_KEY, now); } catch (e) {}
 }
 
 // Re-adopts the stored rows for every page except the one now on screen
@@ -264,16 +282,20 @@ function adoptForeignRow(tr, model, pageIndex) {
 // means asking for a large pagesize returns them all in one request. This
 // redirects once, then leaves the flag so it cannot loop.
 export function requestAllRows() {
-  const pager = [...document.querySelectorAll('a[href*="netui_pagesize"]')];
-  if (!pager.length) return false;
-
+  // more than one page to fold together, or there is nothing to do
   const total = (document.body.textContent.match(/Page\s+\d+\s+of\s+(\d+)/) || [])[1];
   if (!total || Number(total) < 2) return false;
 
-  const url = new URL(pager[0].href, location.href);
-  const size = url.searchParams.get('netui_pagesize');   // e.g. "grid;20"
-  if (!size) return false;
-  const gridName = size.split(';')[0];
+  // The grid's name -- the "grid" half of "grid;20" -- is what netui_pagesize
+  // has to be addressed to. The site's own pager links carry netui_row but
+  // NOT netui_pagesize, so the name is read from a netui_row value instead:
+  // the 跳转到 <select> when it is still here, otherwise a pager link.
+  const sel = document.querySelector('select[name="netui_row"]');
+  const link = document.querySelector('a[href*="netui_row"]');
+  const sample = (sel && sel.options.length && sel.options[0].value)
+    || (link && new URL(link.href, location.href).searchParams.get('netui_row'));
+  const gridName = sample && sample.split(';')[0];
+  if (!gridName) return false;
 
   // already asked for everything -> nothing more to do
   const current = new URL(location.href);

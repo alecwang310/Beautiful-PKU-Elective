@@ -130,10 +130,23 @@ export function applyFilter(grid, state) {
     else r.tr.removeAttribute('title');
   });
 
-  // client-side pagination over the matching rows, in their (already
+  // Client-side pagination over the matching rows, in their (already
   // name-sorted) order: show only the 20 on the current search page.
+  //
+  // This belongs to searching ONLY. A search reaches across the cross-page
+  // cache, so its results need a pager of their own; with no search running,
+  // the rows in the grid are exactly the ones the server chose to send and
+  // the site's own paging already decided how many that is. Slicing them too
+  // would cap every list at 20 -- including 维护选课计划, which ships its whole
+  // plan in one page and has no pager to walk past the cap with.
+  // A list with no pager (nothing for setSearchPager to repurpose) also gets
+  // every match: paging it would hide results behind controls that are not
+  // on the page.
+  const paged = filtering && !!pagerState.pagerCtl;
   const pageStart = pagerState.searchPage * SEARCH_PAGE_SIZE;
-  const onPage = new Set(matching.slice(pageStart, pageStart + SEARCH_PAGE_SIZE));
+  const onPage = new Set(paged
+    ? matching.slice(pageStart, pageStart + SEARCH_PAGE_SIZE)
+    : matching);
   model.rows.forEach((r) => {
     const visible = onPage.has(r);
     r.hiddenByFilter = !visible;

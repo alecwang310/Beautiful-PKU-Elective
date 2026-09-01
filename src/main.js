@@ -16,17 +16,14 @@ const STYLES = [
 
 GM_addStyle(STYLES);
 
-import { state } from './state.js';
-import { MERGE_PAGES } from './config.js';
-import { isResultsPage } from './router.js';
-import {
-  consumeLastOpCourse, readCreditInfo, reinsertRemainRandom,
+import { isResultsPage, isPlanPage } from './router.js';
+import {readCreditInfo, reinsertRemainRandom,
   dropLegacyRowStyling,
 } from './utils/table.js';
 import { enhanceGrid } from './grid/enhance.js';
 import { refilter } from './events.js';
 import { buildPager } from './utils/pager.js';
-import { snapshotPager, requestAllRows } from './utils/cache.js';
+import { snapshotPager, requestAllRows, dropPageCacheOnReentry } from './utils/cache.js';
 import { buildHeader } from './ui/header.js';
 import { buildHero } from './ui/hero.js';
 import { buildNotices, removeNoteLine } from './ui/notices.js';
@@ -42,16 +39,17 @@ import { wireActions } from './utils/actions.js';
 function buildPage() {
   buildHeader();
   removeNoteLine();
-  // a page reload after 预选 must still name the course in the error box
-  try { state.lastOpCourse = sessionStorage.getItem('pku-last-op-course') || null; } catch (e) {}
-  // if this navigates, the page reloads with every row and runs again
-  // NOTE: the all-rows redirect is disabled on purpose -- it interfered with
-  // the site's own pager. Paging is left exactly as the site does it; flip
-  // MERGE_PAGES to re-enable the single-page load.
-  if (MERGE_PAGES && requestAllRows()) return;
+  // On 维护选课计划 the list should show every row on one page (no paging),
+  // like the original site. requestAllRows redirects once to raise the page
+  // size; when it returns true we return so the reloaded page re-runs.
+  if (isPlanPage() && requestAllRows()) return;
+  // Runs after the redirect above, so the recorded view is the one actually
+  // shown. Coming back to a list from anywhere else drops its stored cross-page
+  // cache, so the toolbar rebuilds it from scratch instead of reusing rows that
+  // may have moved on while the user was away.
+  dropPageCacheOnReentry();
   const hero = buildHero();
   const notices = buildNotices();
-  consumeLastOpCourse();   // the error box (if any) has used the name
 
   if (hero || notices.length) {
     // insert after the header so the reskinned blocks lead the page

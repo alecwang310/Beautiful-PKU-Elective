@@ -95,6 +95,9 @@ export const FOOTER_MAIL = 'sermis@pku.edu.cn';
 
 // ---- storage keys ----
 export const CACHE_STORE_KEY = 'pku-elective-page-cache';
+// the list the previous page load was showing, so a return visit can tell
+// "walked to page 2 of this list" from "went away and came back"
+export const LAST_VIEW_KEY = 'pku-elective-last-view';
 export const TT_CACHE = 'pku-timetable';
 export const TT_PREF = 'pku-timetable-pref';
 export const TT_STALE = 'pku-timetable-stale';

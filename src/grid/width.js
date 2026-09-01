@@ -34,7 +34,11 @@ export function collapseScrollColumns(grid, headRow, bodyRows, measured) {
     run = w ? run + 1 : 0;
     if (run > best.len) best = { start: i - run + 1, len: run };
   });
-  if (best.len < 2) return false;
+  if (best.len < 2) {
+    console.log('[BPE-debug] collapseScrollColumns → NO PANE (longest run = ' + best.len + ')',
+      labels.map((l, i) => l + (wanted[i] ? '*' : '')).join(' '));
+    return false;
+  }
 
   const first = best.start, last = best.start + best.len - 1;
   const span = last - first + 1;
@@ -52,11 +56,19 @@ export function collapseScrollColumns(grid, headRow, bodyRows, measured) {
   // The pane's own columns are sized by the same rule as the outer ones.
   // 备注 is the exception the width rule names outright: it is always given
   // half of what its text asks for, however long that text runs.
+  // Each pane column is given the same cell padding as the fixed columns, so
+  // its text is not clipped by the box that holds it (年级's "2026" needs the
+  // 5px either side on top of its ~2.2em, or it wraps onto a second line). The
+  // padding is read off the grid's real font size, exactly as assignColumnWidths
+  // does.
+  const fs = parseFloat(getComputedStyle(grid).fontSize) || 13;
+  const padEm = 10 / fs;                 // 5px of cell padding either side
   const paneEm = order.map((k) => {
     const l = paneLabels[k];
     const m = measured && measured[first + k];
     const w = m ? m.w : (SCROLL_COL_EM[l] || 8);
-    return COL.note && COL.note.includes(l) ? w * COL_NOTE_K : w;
+    const note = COL.note && COL.note.includes(l) ? w * COL_NOTE_K : w;
+    return note + padEm;
   });
   const widths = paneEm.map((w) => w.toFixed(2) + 'em');
 
@@ -106,6 +118,11 @@ export function collapseScrollColumns(grid, headRow, bodyRows, measured) {
     w: paneEm.reduce((a, b) => a + b, 0),
     floor: paneEm[0] || 8,
   };
+
+  console.log('[BPE-debug] collapseScrollColumns',
+    'first=' + first, 'last=' + last, 'span=' + span,
+    'labels=' + JSON.stringify(paneLabels),
+    'em=' + JSON.stringify(paneEm.map((w) => Number(w.toFixed(2)))));
 
   return true;
 }
@@ -214,7 +231,7 @@ function keepEm(vals) {
 // Measured while the header and the body cells still line up one-to-one --
 // before the scrolling columns are merged into a single pane.
 export function measureColumns(headRow, bodyRows) {
-  return [...headRow.children].map((th, c) => {
+  const out = [...headRow.children].map((th, c) => {
     const gutter = th.classList.contains('pku-foldcell');
     const label = gutter ? '' : headText(th);
     const vals = [];
@@ -226,16 +243,27 @@ export function measureColumns(headRow, bodyRows) {
       const t = cellLineText(td);
       if (t) texts.push(t);
     });
-    // Headings are allowed to wrap, so this is not "fit the heading on one
-    // line" -- it is a floor that keeps a column with terse values from
-    // ending up narrower than the word naming it.
+    const contentW = keepEm(vals);
+    const headerW = textEm(label) * COL_HEAD_K;
+    const longestText = texts.reduce((m, t) => (t.length > m.length ? t : m), '');
     return {
       label,
       gutter,
-      w: Math.max(keepEm(vals), textEm(label) * COL_HEAD_K),
+      w: Math.max(contentW, headerW),
       target: columnTarget(label, texts),
+      _dbg: { contentW, headerW, vals, longestText },
     };
   });
+  console.log('[BPE-debug] measureColumns — contentW vs headerW → w/t, [longest text]');
+  out.forEach((m) => {
+    console.log('  ' + (m.label || '(gutter)'),
+      'contentW=' + m._dbg.contentW.toFixed(2),
+      'headerW=' + m._dbg.headerW.toFixed(2),
+      'vals=' + JSON.stringify(m._dbg.vals.map((v) => Number(v.toFixed(2)))),
+      '→ w=' + m.w.toFixed(2) + '/t' + m.target,
+      JSON.stringify(m._dbg.longestText.slice(0, 24)));
+  });
+  return out;
 }
 
 // Take `need` em out of these columns in proportion to their width, so every
@@ -275,7 +303,7 @@ function setPaneWidths(grid, pane) {
 export function assignColumnWidths(grid, headRow, measured, pane) {
   const cells = [...headRow.children];
   const fs = parseFloat(getComputedStyle(grid).fontSize) || 13;
-  const padEm = 20 / fs;              // 10px of cell padding either side
+  const padEm = 10 / fs;              // 5px of cell padding either side
   const px = grid.getBoundingClientRect().width
     || (grid.parentElement && grid.parentElement.clientWidth) || 0;
   if (!px || !measured) return;
@@ -300,7 +328,7 @@ export function assignColumnWidths(grid, headRow, measured, pane) {
   });
   if (!cols.length) return;
 
-  const room = px / fs - cols.length * padEm;
+  const room = px / fs - cols.filter((c) => !c.pane).length * padEm;
   if (room <= 0) return;
 
   // We use this strategy: each column has its own min target: if any shrinking is needed, the scroll pane gets cut first, then, we
@@ -311,7 +339,7 @@ export function assignColumnWidths(grid, headRow, measured, pane) {
     c.hold = COL_HOLD[c.label] || 1;
     if (c.hold == 1 && c.w < COL_NARROW) { c.hold = SHORT_FIELD_MULTIPLY; }
     const W = c.w;                       // measured width, pre-reduction
-    if (c.w > COL_WIDE * room) { c.w *= COL_WIDE_K; c.reduced = true; }
+    if (!c.pane && c.w > COL_WIDE * room) { c.w *= COL_WIDE_K; c.reduced = true; }
     c.full = c.w;
     // the floor is the width that fits on `target` lines (with 10% headroom);
     // a one-line column therefore refuses to shrink at all
@@ -323,6 +351,8 @@ export function assignColumnWidths(grid, headRow, measured, pane) {
   if (paneCol) paneCol.min = Math.min(paneCol.w, pane.floor);
 
   let total = cols.reduce((a, c) => a + c.w, 0);
+  console.log('[BPE-debug] assignColumnWidths DECISION: total=' + total.toFixed(1) + ' room=' + room.toFixed(1)
+    + ' → ' + (total <= room ? 'FITS' : 'SHRINK'));
   if (total <= room) {
     // Everything fits, so nothing has to scroll -- and a pane that does not
     // scroll is not a unit any more. Its columns take their share of the
@@ -339,30 +369,55 @@ export function assignColumnWidths(grid, headRow, measured, pane) {
     if (pane && pane.em) setPaneWidths(grid, pane);
   } else {
     let need = total - room;
+    console.log('[BPE-debug]   step1 initial need=' + need.toFixed(1));
     // The pane goes first -- it scrolls, so width taken from it costs
     // nothing that cannot be scrolled back into view.
     if (paneCol) {
       const cut = Math.min(need, paneCol.w - paneCol.min);
       paneCol.w -= cut;
       need -= cut;
+      console.log('[BPE-debug]   step2 cut pane by ' + cut.toFixed(1) + ' → need=' + need.toFixed(1));
     }
     // then the columns that have not been reduced yet, down to the same
     // treatment the wide ones already had
     need = shrinkCols(cols.filter((c) => !c.reduced && !c.pane), need);
-    // and only once everything sits at that width does it all give together
+    console.log('[BPE-debug]   step3 shrink non-reduced cols → need=' + need.toFixed(1));
+    // and only once everything sits at that width does it all give together.
+    // The pane scrolls, so it absorbs the leftover shortfall first, down to a
+    // thin strip; only then are the readable columns squeezed, and never below
+    // ~3em, so text cannot collapse to one character per line.
     if (need > 0.01) {
-      cols.forEach((c) => { c.min = 1; });
-      shrinkCols(cols, need);
+      if (paneCol) {
+        const cut = Math.min(need, paneCol.w - 3);
+        paneCol.w -= cut;
+        need -= cut;
+        console.log('[BPE-debug]   step4 cut pane to 3em → need=' + need.toFixed(1));
+      }
+      if (need > 0.01) {
+        cols.forEach((c) => { if (!c.pane) c.min = 3; });
+        const leftover = shrinkCols(cols.filter((c) => !c.pane), need);
+        console.log('[BPE-debug]   step5 crush to min3 → leftover=' + leftover.toFixed(1));
+      }
     }
   }
 
+  console.log('[BPE-debug] assignColumnWidths',
+    'room=' + room.toFixed(1),
+    cols.map((c) => (c.pane ? '(pane)' : c.label) + '=w' + c.w.toFixed(2) + '/min' + c.min.toFixed(2) + '/t' + c.target + '/hold' + c.hold).join(' | '));
+
   // Written as percentages of what was allocated, so the table still fills
   // its width between resizes; the shares themselves are re-derived on one.
-  const sum = cols.reduce((a, c) => a + c.w, 0) || 1;
   cols.forEach((c) => {
     c.th.removeAttribute('width');
-    c.th.style.setProperty('width', (c.w / sum * 100).toFixed(2) + '%', 'important');
+    // c.w is the CONTENT width; the cell also carries padEm of horizontal
+    // padding (the pane cell is padding:0), so the cell width is c.w + pad.
+    const pad = c.pane ? 0 : padEm;
+    const frac = (c.w + pad) / (px / fs);
+    c.th.style.setProperty('width', (frac * 100).toFixed(2) + '%', 'important');
   });
+
+  console.log('[BPE-debug] assignColumnWidths final %',
+    cols.map((c) => (c.pane ? '(pane)' : c.label) + '=' + ((c.w + (c.pane ? 0 : padEm)) / (px / fs) * 100).toFixed(1) + '%').join(' | '));
 
   cells.forEach((th) => {
     if (th.classList.contains('pku-dscrollcell')) return;

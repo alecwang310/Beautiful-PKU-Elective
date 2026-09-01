@@ -25,6 +25,12 @@ export function isResultsPage() {
   return /showResults/.test(currentUrl());
 }
 
+// 维护选课计划 (maintain the plan): the plan list should show every row on one
+// page rather than the site's 20-per-page paging.
+export function isPlanPage() {
+  return /electivePlan/.test(currentUrl());
+}
+
 // Open where the timetable is what you are working against: choosing courses
 // to add to the plan, and ordering 预选. Everywhere else it waits, folded.
 export function timetableStartsOpen() {

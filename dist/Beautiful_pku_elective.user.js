@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Beautiful PKU Elective
 // @namespace    beautiful.pku.elective.v1
-// @version      0.1.0
+// @version      1.0.1
 // @author       Alecwang (https://github.com/alecwang310)
 // @description  Modern UI for elective.pku.edu.cn with more powerful features
 // @license      MIT
@@ -45,8 +45,8 @@
 	};
 	var css = String.raw;
 	var Root = css`table:has(#menu){display:none!important}body{background:#fff!important;margin:0!important}:root{--pku-gutter:24px;--pku-tab-pad:14px;--pku-nav-gap:12px;--pku-content-w:95%;--pku-notice-pad:16px 20px;--pku-title-pad-y:14px;--pku-tab-pad-y:9px;--pku-hover-pad-y:8px;--pku-hover-pad-x:12px;--pku-toolbar-pad-x:14px;--pku-section-rule-gap:16px;--pku-search-gap:50px}`;
-	var Title = css`.pku-titlebar{padding:var(--pku-title-pad-y) var(--pku-gutter)!important;background:${C.headerBg}!important;color:${C.text}!important;align-items:center!important;gap:14px!important;display:flex!important}.pku-logo{filter:brightness(0)!important;width:auto!important;height:42px!important}.pku-title{letter-spacing:1px!important;color:${C.text}!important;margin:0!important;font-size:26px!important;font-weight:600!important}`;
-	var NavMenu = css`.pku-nav{padding:0 calc(var(--pku-gutter) - var(--pku-tab-pad))!important;background:${C.headerBg}!important;align-items:stretch!important;gap:2px!important;display:flex!important}.pku-nav-link,.pku-nav-link:link,.pku-nav-link:visited,.pku-nav-link:active{padding:var(--pku-tab-pad-y) var(--pku-tab-pad)!important;color:${C.text}!important;white-space:nowrap!important;cursor:pointer!important;border-radius:0!important;align-items:center!important;margin:0!important;font-size:18px!important;line-height:1.2!important;text-decoration:none!important;display:flex!important;position:relative!important}.pku-nav-link:hover{color:${C.text}!important;text-decoration:none!important}.pku-nav-link:before{content:""!important;left:calc(var(--pku-tab-pad) - var(--pku-hover-pad-x))!important;right:calc(var(--pku-tab-pad) - var(--pku-hover-pad-x))!important;height:calc(1.2em + var(--pku-hover-pad-y) * 2)!important;pointer-events:none!important;background:0 0!important;border-radius:5px!important;position:absolute!important;top:50%!important;transform:translateY(-50%)!important}.pku-nav-link:hover:before{background:#00000012!important}.pku-nav-label{z-index:1!important;font-size:inherit!important;line-height:inherit!important;position:relative!important}.pku-nav-link.active:after{content:""!important;background:${C.accent}!important;border-radius:2px 2px 0 0!important;height:3px!important;position:absolute!important;bottom:-1px!important;left:0!important;right:0!important}.pku-header{display:contents!important}.pku-nav{z-index:1000!important;border-bottom:1px solid ${C.faintLine}!important;position:sticky!important;top:0!important}@media (width>=900px){.pku-header{z-index:10000!important;background:${C.headerBg}!important;border-bottom:1px solid ${C.faintLine}!important;align-items:stretch!important;display:flex!important;position:sticky!important;top:0!important}.pku-titlebar{padding-right:var(--pku-nav-gap)!important}.pku-nav{padding:0 calc(var(--pku-nav-gap) - var(--pku-tab-pad))!important;border-bottom:none!important;flex:1!important;position:static!important}}`;
+	var Title = css`.pku-titlebar{padding:var(--pku-title-pad-y) var(--pku-gutter)!important;background:${C.headerBg}!important;color:${C.text}!important;align-items:center!important;gap:14px!important;display:flex!important}.pku-logo{filter:brightness(0)!important;width:auto!important;height:42px!important}.pku-title{letter-spacing:1px!important;white-space:nowrap!important;color:${C.text}!important;margin:0!important;font-size:26px!important;font-weight:600!important}`;
+	var NavMenu = css`.pku-nav{padding:0 calc(var(--pku-gutter) - var(--pku-tab-pad))!important;background:${C.headerBg}!important;align-items:stretch!important;gap:2px!important;display:flex!important}.pku-nav-link,.pku-nav-link:link,.pku-nav-link:visited,.pku-nav-link:active{padding:var(--pku-tab-pad-y) var(--pku-tab-pad)!important;color:${C.text}!important;white-space:nowrap!important;cursor:pointer!important;border-radius:0!important;align-items:center!important;margin:0!important;font-size:18px!important;line-height:1.2!important;text-decoration:none!important;display:flex!important;position:relative!important}.pku-nav-link:hover{color:${C.text}!important;text-decoration:none!important}.pku-nav-link:before{content:""!important;left:calc(var(--pku-tab-pad) - var(--pku-hover-pad-x))!important;right:calc(var(--pku-tab-pad) - var(--pku-hover-pad-x))!important;height:calc(1.2em + var(--pku-hover-pad-y) * 2)!important;pointer-events:none!important;background:0 0!important;border-radius:5px!important;position:absolute!important;top:50%!important;transform:translateY(-50%)!important}.pku-nav-link:hover:before{background:#00000012!important}.pku-nav-label{z-index:1!important;font-size:inherit!important;line-height:inherit!important;position:relative!important}.pku-nav-link.active:after{content:""!important;background:${C.accent}!important;border-radius:2px 2px 0 0!important;height:3px!important;position:absolute!important;bottom:-1px!important;left:0!important;right:0!important}.pku-header{display:contents!important}.pku-nav{z-index:1000!important;border-bottom:1px solid ${C.faintLine}!important;position:sticky!important;top:0!important}@media (width>=1024px){.pku-header{z-index:10000!important;background:${C.headerBg}!important;border-bottom:1px solid ${C.faintLine}!important;align-items:stretch!important;display:flex!important;position:sticky!important;top:0!important}.pku-titlebar{padding-right:var(--pku-nav-gap)!important}.pku-nav{padding:0 calc(var(--pku-nav-gap) - var(--pku-tab-pad))!important;border-bottom:none!important;flex:1!important;position:static!important}}`;
 	var PageHero = css`.pku-hero{width:var(--pku-content-w)!important;margin:0 auto!important;padding:36px 0 0!important}.pku-hero-head{padding-bottom:14px!important}.pku-hero-title{color:${C.text}!important;margin:0!important;font-size:30px!important;font-weight:600!important}.pku-hero-meta{color:${C.text}!important;margin-top:8px!important;font-size:13px!important;display:block!important}.pku-hero-meta .pku-hero-meta-time{color:${C.courseLink}!important;font-weight:700!important}.pku-hero-head+.pku-hero-rule{background:${C.rule}!important;height:1px!important}`;
 	var Noticies = css`.pku-notice.pku-notice{width:var(--pku-content-w)!important;box-sizing:border-box!important;padding:var(--pku-notice-pad)!important;border:1px solid ${C.noticeBorder}!important;background:${C.headerBg}!important;border-radius:10px!important;margin:16px auto 0!important;font-size:13px!important;line-height:1.75!important}.pku-notice,.pku-notice *{color:${C.text}!important;background:0 0!important;font-size:13px!important}.pku-notice strong{font-weight:700!important}.pku-notice.pku-notice--error{border-color:${C.errorBorder}!important;background:${C.warnClash}!important}.pku-notice.pku-notice--error,.pku-notice.pku-notice--error *{color:${C.warnClashText}!important}.pku-notice.pku-notice--success{border-color:${C.successBorder}!important;background:${C.successFill}!important}.pku-notice .pku-notice-course{color:${C.warnClashText}!important;font-weight:700!important}`;
 	var SectionHeads = css`.pku-section-head{background:0 0!important;position:static!important}.pku-section-headline,.pku-section-headline *{color:${C.text}!important}.pku-section-headline{top:var(--pku-stick-top,0px)!important;z-index:1100!important;border-bottom:1px solid ${C.rule}!important;background:#fff!important;flex-wrap:wrap!important;align-items:baseline!important;gap:10px!important;padding:26px 0 12px!important;display:flex!important;position:sticky!important}.pku-toolbar{z-index:500!important;padding:16px var(--pku-toolbar-pad-x) 0!important;background:#fff!important;position:relative!important}.pku-toolbar.pku-toolbar--above{z-index:995!important}.pku-section-title{color:${C.text}!important;margin:0!important;font-size:20px!important;font-weight:600!important;line-height:1.3!important}.pku-section-note{font-size:13px!important;font-weight:400!important}.pku-section-headline a.pku-timetable-export,.pku-section-headline a.pku-timetable-export:link,.pku-section-headline a.pku-timetable-export:visited,.pku-section-headline a.pku-timetable-export:active{color:${C.courseLink}!important;text-decoration:none!important}.pku-section-headline a.pku-timetable-export:hover{text-decoration:underline!important}.pku-section-headline .pku-credit-info{color:${C.courseLink}!important;font-size:13px!important;font-weight:600!important}.pku-section-head--bare{width:var(--pku-content-w)!important;border-bottom:1px solid ${C.rule}!important;margin:0 auto 20px!important;padding:16px 0 20px!important;position:static!important}.pku-section-head--bare .pku-actions-row{gap:10px!important}`;
@@ -58,20 +58,55 @@
 	var FilterPanel = css`.pku-filters{opacity:0!important;visibility:hidden!important;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))!important;gap:10px!important;max-height:0!important;transition:max-height .22s,opacity .18s,padding-top .22s,visibility .22s!important;display:grid!important;overflow:hidden!important}.pku-filters--open{opacity:1!important;visibility:visible!important;max-height:140px!important;padding-top:12px!important}.pku-filters--done{max-height:none!important;overflow:visible!important}.pku-facet{border:1px solid ${C.fieldBorder}!important;background:#fff!important;border-radius:6px!important;align-self:start!important;transition:background .18s!important;position:relative!important}.pku-facet--open{background:${C.facetBg}!important;border-bottom-right-radius:0!important;border-bottom-left-radius:0!important}.pku-facet--closing .pku-facet-list{border-bottom-right-radius:6px!important;border-bottom-left-radius:6px!important;transition:max-height .1s,visibility .1s!important}.pku-facet-btn{box-sizing:border-box!important;width:100%!important;color:${C.text}!important;cursor:pointer!important;text-align:left!important;background:0 0!important;border:none!important;justify-content:space-between!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;font-family:inherit!important;font-size:13px!important;display:flex!important}.pku-facet-list{z-index:960!important;visibility:hidden!important;background:${C.facetBg}!important;border:1px solid ${C.fieldBorder}!important;border-top:none!important;border-radius:0 0 6px 6px!important;max-height:0!important;transition:max-height .24s,visibility .24s!important;position:absolute!important;top:100%!important;left:-1px!important;right:-1px!important;overflow:hidden!important;box-shadow:0 6px 18px #0000001f!important}.pku-facet--open .pku-facet-list{visibility:visible!important;max-height:240px!important}.pku-facet-opts{max-height:252px!important;margin:0!important;padding:0 10px 8px 22px!important;list-style:none!important;overflow-y:auto!important}.pku-opt{color:${C.text}!important;cursor:pointer!important;align-items:center!important;gap:8px!important;padding:9px 0 3px!important;font-size:13px!important;display:flex!important}.pku-opt input{opacity:0!important;width:0!important;height:0!important;position:absolute!important}.pku-dot{border:1.5px solid ${C.optDot}!important;background:#fff!important;border-radius:50%!important;flex:none!important;width:13px!important;height:13px!important;transition:background .15s,border-color .15s!important}.pku-opt input:checked+.pku-dot{background:${C.btnBlue}!important;border-color:${C.btnBlue}!important;box-shadow:inset 0 0 0 2.5px #fff!important}.pku-opt input:focus-visible+.pku-dot{outline:2px solid ${C.btnBlue}!important;outline-offset:1px!important}.pku-opt-text{font-size:13px!important}`;
 	var Footer = css`.pku-footer{box-sizing:border-box!important;width:100%!important;padding:9px var(--pku-gutter)!important;background:${C.headerBg}!important;color:${C.text}!important;text-align:center!important;margin:24px 0 0!important;font-size:13px!important}.pku-footer a,.pku-footer a:link,.pku-footer a:visited{color:${C.link}!important;background:0 0!important;text-decoration:none!important}.pku-footer a:hover{text-decoration:underline!important}`;
 	var Pager = css`.pku-pager-cell{z-index:900!important;box-sizing:border-box!important;border-top:1px solid ${C.gridLine}!important;background:#fff!important;padding:12px 10px!important;position:relative!important}.pku-pager{flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;gap:10px!important;display:flex!important}.pku-pg-info{color:${C.text}!important;font-size:13px!important}.pku-pg,.pku-pg:link,.pku-pg:visited{cursor:pointer!important;color:${C.btnBlue}!important;background:0 0!important;justify-content:center!important;align-items:center!important;gap:1px!important;text-decoration:none!important;display:inline-flex!important}a.pku-pg,a.pku-pg:link,a.pku-pg:visited,a.pku-pg:active,a.pku-pg:hover,span.pku-pg{color:${C.btnBlue}!important;background:0 0!important;border-radius:0!important;padding:5px 7px!important;text-decoration:none!important}a.pku-pg:hover{color:${C.btnBlueHover}!important}.pku-pg--off{opacity:.35!important;cursor:default!important;pointer-events:none!important}.pku-pg-chev{border-top:1.7px solid!important;border-right:1.7px solid!important;width:.42em!important;height:.42em!important;display:inline-block!important}.pku-pg-chev--right{transform:rotate(45deg)!important}.pku-pg-chev--left{transform:rotate(-135deg)!important}.pku-pg--edge .pku-pg-chev+.pku-pg-chev{margin-left:-3px!important}.pku-pg-jump{color:${C.text}!important;font-size:13px!important}.pku-pg-jump select{border:1px solid ${C.fieldBorder}!important;background:#fff!important;border-radius:4px!important;padding:4px 6px!important;font-family:inherit!important;font-size:13px!important}`;
-	var Grid = css`table.datagrid{border-collapse:collapse!important;table-layout:fixed!important;border:none!important;width:100%!important;font-size:13px!important}table.datagrid tr,table.datagrid tr.datagrid-header,table.datagrid tr.datagrid-footer{background:0 0!important;border:none!important}table.datagrid td,table.datagrid th{border-bottom:none!important;border-left:none!important;border-right:none!important;border-top:1px solid ${C.gridLine}!important;vertical-align:top!important;overflow-wrap:anywhere!important;padding:8px 10px!important}table.datagrid tr.pku-head-row>th,table.datagrid tr.pku-head-row>td{top:var(--pku-head-top,0px)!important;z-index:880!important;background:${C.headBg}!important;color:${C.text}!important;text-align:center!important;vertical-align:middle!important;border-top:none!important;font-size:13px!important;font-weight:600!important;position:sticky!important}table.datagrid.pku-no-title tr.pku-head-row>th,table.datagrid.pku-no-title tr.pku-head-row>td{top:var(--pku-stick-top,0px)!important}table.datagrid th .pku-head{white-space:normal!important;overflow-wrap:anywhere!important;display:block!important}table.datagrid .pku-scrollcell{border-left:1px solid ${C.edgeLine}!important;border-right:1px solid ${C.edgeLine}!important;padding:0!important;overflow:hidden!important}.pku-hscroll{overflow:auto hidden!important}table.datagrid tr:not(.pku-head-row) .pku-hscroll{scrollbar-width:none!important;-ms-overflow-style:none!important}table.datagrid tr:not(.pku-head-row) .pku-hscroll::-webkit-scrollbar{height:0!important;display:none!important}table.pku-inner{border-collapse:collapse!important;table-layout:fixed!important;background:0 0!important;width:max-content!important}table.pku-inner td,table.pku-inner th{vertical-align:top!important;overflow-wrap:anywhere!important;background:0 0!important;border:none!important;padding:8px 10px!important}table.pku-inner td:not(.pku-info-cell) .pku-cell{-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;height:3em!important;min-height:3em!important;line-height:1.5!important;display:-webkit-box!important;overflow:hidden!important}table.datagrid tr.pku-head-row .pku-scrollcell,table.datagrid tr.pku-head-row table.pku-inner th,table.datagrid tr.pku-head-row table.pku-inner td{vertical-align:middle!important}table.datagrid tr.pku-head-row .pku-hscroll{scrollbar-width:thin!important;height:100%!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar{height:5px!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-thumb{background:${C.edgeLine}!important;border-radius:3px!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-track{background:0 0!important}table.datagrid tr.pku-head-row .pku-cell{min-height:0!important}table.datagrid .pku-col-name{border-right:1px solid ${C.gridLine}!important}table.datagrid td .pku-cell{min-height:3em!important;line-height:1.5!important;display:block!important}table.datagrid a,table.datagrid a:link,table.datagrid a:visited,table.datagrid a:active,table.datagrid a:hover{color:${C.courseLink}!important;cursor:pointer!important;background:0 0!important;text-decoration:none!important}table.datagrid a:hover{text-decoration:underline!important}table.datagrid a span,table.datagrid a font{color:inherit!important;text-decoration:inherit!important}tr.pku-r-even>td{background:${C.zebraEven}!important}tr.pku-r-odd>td{background:${C.zebraOdd}!important}tr.pku-f-name>td{background:${C.rowFolded}!important}table.datagrid tr.pku-row:hover>td{background:${C.rowHover}!important}`;
+	var Grid = css`table.datagrid{border-collapse:collapse!important;table-layout:fixed!important;border:none!important;width:100%!important;font-size:13px!important}table.datagrid tr,table.datagrid tr.datagrid-header,table.datagrid tr.datagrid-footer{background:0 0!important;border:none!important}table.datagrid td,table.datagrid th{border-bottom:none!important;border-left:none!important;border-right:none!important;border-top:1px solid ${C.gridLine}!important;vertical-align:top!important;overflow-wrap:anywhere!important;padding:4px 5px!important}table.datagrid tr.pku-head-row>th,table.datagrid tr.pku-head-row>td{top:var(--pku-head-top,0px)!important;z-index:880!important;background:${C.headBg}!important;color:${C.text}!important;text-align:center!important;vertical-align:middle!important;border-top:none!important;font-size:13px!important;font-weight:600!important;position:sticky!important}table.datagrid.pku-no-title tr.pku-head-row>th,table.datagrid.pku-no-title tr.pku-head-row>td{top:var(--pku-stick-top,0px)!important}table.datagrid th .pku-head{white-space:normal!important;overflow-wrap:anywhere!important;display:block!important}table.datagrid .pku-scrollcell{border-left:1px solid ${C.edgeLine}!important;border-right:1px solid ${C.edgeLine}!important;padding:0!important;overflow:hidden!important}.pku-hscroll{overflow:auto hidden!important}table.datagrid tr:not(.pku-head-row) .pku-hscroll{scrollbar-width:none!important;-ms-overflow-style:none!important}table.datagrid tr:not(.pku-head-row) .pku-hscroll::-webkit-scrollbar{height:0!important;display:none!important}table.pku-inner{border-collapse:collapse!important;table-layout:fixed!important;background:0 0!important;width:max-content!important}table.pku-inner td,table.pku-inner th{vertical-align:top!important;overflow-wrap:anywhere!important;background:0 0!important;border:none!important;padding:4px 5px!important}table.datagrid tr.pku-head-row .pku-scrollcell,table.datagrid tr.pku-head-row table.pku-inner th,table.datagrid tr.pku-head-row table.pku-inner td{vertical-align:middle!important}table.datagrid tr.pku-head-row .pku-hscroll{scrollbar-width:thin!important;height:100%!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar{height:5px!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-thumb{background:${C.edgeLine}!important;border-radius:3px!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-track{background:0 0!important}table.datagrid tr.pku-head-row .pku-cell{min-height:0!important}table.datagrid .pku-col-name{border-right:1px solid ${C.gridLine}!important}table.datagrid td .pku-cell{min-height:3em!important;line-height:1.5!important;display:block!important}table.datagrid a,table.datagrid a:link,table.datagrid a:visited,table.datagrid a:active,table.datagrid a:hover{color:${C.courseLink}!important;cursor:pointer!important;background:0 0!important;text-decoration:none!important}table.datagrid a:hover{text-decoration:underline!important}table.datagrid a span,table.datagrid a font{color:inherit!important;text-decoration:inherit!important}tr.pku-r-even>td{background:${C.zebraEven}!important}tr.pku-r-odd>td{background:${C.zebraOdd}!important}tr.pku-f-name>td{background:${C.rowFolded}!important}table.datagrid tr.pku-row:hover>td{background:${C.rowHover}!important}`;
 	var Warnings = css`table.datagrid tr.pku-over-credit>td{background:${C.warnCredit}!important}table.datagrid tr.pku-clash>td{background:${C.warnClash}!important;color:${C.warnClashText}!important}table.datagrid tr.pku-f-name.pku-clash>td,table.datagrid tr.pku-f-name.pku-over-credit>td{background:${C.rowFolded}!important;color:${C.text}!important}table.datagrid tr.pku-clash a,table.datagrid tr.pku-over-credit a{color:${C.courseLink}!important}table.datagrid tr.pku-clash:hover>td,table.datagrid tr.pku-over-credit:hover>td{filter:brightness(.97)!important}tr.pku-group-start>td,tr.pku-group-start>th{border-top:1px solid ${C.groupLine}!important}`;
-	var Fold = css`table.datagrid tr.pku-fold>td{border-top-width:0!important;overflow:hidden!important}table.datagrid tr.pku-fold>td>.pku-cell{min-height:0!important;display:block!important;overflow:hidden!important}table.datagrid tr.pku-fold--shut>td{padding-top:0!important;padding-bottom:0!important}table.datagrid tr.pku-fold--anim>td{transition:padding-top .24s,padding-bottom .24s!important}table.datagrid tr.pku-fold--anim>td>.pku-cell,table.datagrid tr.pku-fold--anim>td>.pku-hscroll{transition:height .24s!important}tr.pku-hidden,tr.pku-filtered-out{display:none!important}table.datagrid tr.datagrid-all>td{background:${C.rowHover}!important}table.datagrid tr.datagrid-all.pku-f-name>td{background:${C.rowFolded}!important}.pku-folded-mark{color:${C.noteText}!important;font-size:12px!important}table.datagrid .pku-foldcell--empty{width:4px!important;padding:0!important}table.datagrid td.pku-foldcell,table.datagrid th.pku-foldcell{text-align:center!important;vertical-align:middle!important;width:26px!important;padding:8px 0 8px 4px!important}.pku-fold-btn{cursor:pointer!important;width:1.5em!important;height:1.5em!important;color:${C.text}!important;background:0 0!important;border:none!important;justify-content:center!important;align-items:center!important;padding:0!important;font-size:13px!important;display:inline-flex!important}#classAssignment .course{padding-left:2px!important}`;
+	var Fold = css`table.datagrid tr.pku-fold>td{border-top-width:0!important;overflow:hidden!important}table.datagrid tr.pku-fold>td>.pku-cell{min-height:0!important;display:block!important;overflow:hidden!important}table.datagrid tr.pku-fold--shut>td{padding-top:0!important;padding-bottom:0!important}table.datagrid tr.pku-fold--anim>td{transition:padding-top .24s,padding-bottom .24s!important}table.datagrid tr.pku-fold--anim>td>.pku-cell,table.datagrid tr.pku-fold--anim>td>.pku-hscroll{transition:height .24s!important}tr.pku-hidden,tr.pku-filtered-out{display:none!important}table.datagrid tr.datagrid-all>td{background:${C.rowHover}!important}table.datagrid tr.datagrid-all.pku-f-name>td{background:${C.rowFolded}!important}.pku-folded-mark{color:${C.noteText}!important;font-size:12px!important}table.datagrid .pku-foldcell--empty{width:4px!important;padding:0!important}table.datagrid td.pku-foldcell,table.datagrid th.pku-foldcell{text-align:center!important;vertical-align:middle!important;width:26px!important;padding:4px 0 4px 4px!important}.pku-fold-btn{cursor:pointer!important;width:1.5em!important;height:1.5em!important;color:${C.text}!important;background:0 0!important;border:none!important;justify-content:center!important;align-items:center!important;padding:0!important;font-size:13px!important;display:inline-flex!important}#classAssignment .course{padding-left:2px!important}`;
 	var Timetable = css`.pku-tt{z-index:3000!important;cursor:grab!important;color:${C.text}!important;--pku-tt-head-h:20px!important;border-radius:6px!important;align-items:stretch!important;font-size:12px!important;line-height:1.25!important;display:flex!important;position:fixed!important;box-shadow:0 10px 30px #0000002e!important}.pku-tt-body{z-index:1!important;box-sizing:border-box!important;border:1px solid ${C.edgeLine}!important;background:#fff!important;border-right:none!important;border-radius:6px 0 0 6px!important;position:relative!important;overflow:hidden!important}.pku-tt--anim .pku-tt-body{transition:width .24s,border-left-width .24s!important}.pku-tt--shut .pku-tt-body{border-left-width:0!important}.pku-tt-grid{touch-action:none!important;box-sizing:border-box!important;background:${C.gridLine}!important;gap:1px!important;height:100%!important;display:grid!important}.pku-tt-cell,.pku-tt-head,.pku-tt-side{box-sizing:border-box!important;background:#fff!important;justify-content:center!important;align-items:center!important;padding:0!important;display:flex!important;overflow:hidden!important}.pku-tt-head{background:${C.headerBg}!important;white-space:nowrap!important;font-weight:600!important}.pku-tt-side{color:${C.noteText}!important;white-space:nowrap!important;font-weight:600!important}.pku-tt-fit{box-sizing:border-box!important;text-align:center!important;overflow-wrap:anywhere!important;transform-origin:50%!important;flex:none!important;width:max-content!important;padding:2px!important}.pku-tt-exam{opacity:.75!important}.pku-tt-sep{opacity:.45!important;border-top:1px solid!important;width:55%!important;margin:1px auto!important}.pku-tt-bar{box-sizing:border-box!important;background:${C.headerBg}!important;border:1px solid ${C.edgeLine}!important;touch-action:none!important;border-radius:0 6px 6px 0!important;flex-direction:column!important;flex:none!important;align-items:center!important;width:30px!important;padding-top:5px!important;display:flex!important}.pku-tt--dragging,.pku-tt--dragging .pku-tt-bar{cursor:grabbing!important}.pku-tt-grip,.pku-tt-chev{cursor:default!important}.pku-tt-chev{cursor:pointer!important}.pku-tt-grip{cursor:nesw-resize!important}.pku-tt-chev{cursor:pointer!important;width:28px!important;height:28px!important;color:${C.text}!important;background:0 0!important;border:none!important;flex:none!important;justify-content:center!important;align-items:center!important;padding:0!important;display:flex!important}.pku-tt-chev .pku-chev{transform-origin:65% 65%!important;transition:transform .24s!important;transform:rotate(-45deg)!important}.pku-tt--shut .pku-tt-chev .pku-chev{transform:rotate(135deg)!important}.pku-tt-grip{cursor:nesw-resize!important;touch-action:none!important;width:17px!important;height:17px!important;position:absolute!important;bottom:-11px!important;left:-11px!important}.pku-tt--shut .pku-tt-grip{display:none!important}.pku-tt-grip:before{content:""!important;border-left:2px solid ${C.text}!important;border-bottom:2px solid ${C.text}!important;filter:drop-shadow(1px 1px 2px #00000073)!important;border-bottom-left-radius:5px!important;transition:border-width .12s!important;position:absolute!important;inset:0!important}.pku-tt-grip:hover:before,.pku-tt--sizing .pku-tt-grip:before{border-bottom-width:4px!important;border-left-width:4px!important}.pku-tt--stale .pku-tt-grid{filter:blur(8px)!important}.pku-tt-stale{z-index:2!important;box-sizing:border-box!important;text-align:center!important;pointer-events:none!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;gap:8px!important;padding:20px!important;display:flex!important;position:absolute!important;inset:0!important}.pku-tt-stale-main{color:${C.text}!important;font-size:14px!important;font-weight:600!important;line-height:1.5!important}.pku-tt-stale-sub{color:${C.noteText}!important;font-size:11px!important;line-height:1.5!important}`;
-	var state = {
-		gridModel: new WeakMap(),
-		lastOpCourse: null
-	};
-	var pagerState = {
-		searchPage: 0,
-		searchActive: false,
-		searchTotal: 0,
-		pagerCtl: null
-	};
+	var NAV = [
+		{
+			label: "选课计划",
+			match: (u) => /electivePlan|courseQuery/.test(u)
+		},
+		{
+			label: "选课结果",
+			match: (u) => /showResults/.test(u)
+		},
+		{
+			label: "预选",
+			match: (u) => /electiveWork/.test(u)
+		},
+		{
+			label: "补退选",
+			match: (u) => /SupplyCancel/.test(u)
+		},
+		{
+			label: "补选",
+			match: (u) => /SupplyOnly/.test(u)
+		},
+		{
+			label: "帮助",
+			match: (u) => /HelpController/.test(u)
+		},
+		{
+			label: "退出",
+			match: (u) => /logout/.test(u)
+		}
+	];
+	function currentUrl() {
+		return location.pathname + location.search;
+	}
+	function activeNav() {
+		return NAV.find((n) => n.match(currentUrl())) || null;
+	}
+	function isResultsPage() {
+		return /showResults/.test(currentUrl());
+	}
+	function isPlanPage() {
+		return /electivePlan/.test(currentUrl());
+	}
+	function timetableStartsOpen() {
+		return /courseQuery|electiveWork/i.test(location.href);
+	}
 	var COL = {
 		id: ["课程号"],
 		name: ["课程名", "课程名称"],
@@ -167,53 +202,19 @@
 	var COL_CODES = ["课程号", "课程班号"];
 	var FOOTER_MAIL = "sermis@pku.edu.cn";
 	var CACHE_STORE_KEY = "pku-elective-page-cache";
+	var LAST_VIEW_KEY = "pku-elective-last-view";
 	var TT_CACHE = "pku-timetable";
 	var TT_PREF = "pku-timetable-pref";
 	var TT_STALE = "pku-timetable-stale";
 	var Q_TEXT = ["courseID", "courseName"];
 	var Q_SEL = ["courseDay", "courseTime"];
-	var NAV = [
-		{
-			label: "选课计划",
-			match: (u) => /electivePlan|courseQuery/.test(u)
-		},
-		{
-			label: "选课结果",
-			match: (u) => /showResults/.test(u)
-		},
-		{
-			label: "预选",
-			match: (u) => /electiveWork/.test(u)
-		},
-		{
-			label: "补退选",
-			match: (u) => /SupplyCancel/.test(u)
-		},
-		{
-			label: "补选",
-			match: (u) => /SupplyOnly/.test(u)
-		},
-		{
-			label: "帮助",
-			match: (u) => /HelpController/.test(u)
-		},
-		{
-			label: "退出",
-			match: (u) => /logout/.test(u)
-		}
-	];
-	function currentUrl() {
-		return location.pathname + location.search;
-	}
-	function activeNav() {
-		return NAV.find((n) => n.match(currentUrl())) || null;
-	}
-	function isResultsPage() {
-		return /showResults/.test(currentUrl());
-	}
-	function timetableStartsOpen() {
-		return /courseQuery|electiveWork/i.test(location.href);
-	}
+	var state = { gridModel: new WeakMap() };
+	var pagerState = {
+		searchPage: 0,
+		searchActive: false,
+		searchTotal: 0,
+		pagerCtl: null
+	};
 	var CREDIT_INFO = null;
 	function infoLines(cell) {
 		if (!cell) return [];
@@ -308,18 +309,6 @@
 			limit: +m[1],
 			taken: +m[2]
 		} : null;
-	}
-	function setLastOpCourse(name) {
-		state.lastOpCourse = name;
-		try {
-			sessionStorage.setItem("pku-last-op-course", name);
-		} catch (e) {}
-	}
-	function consumeLastOpCourse() {
-		state.lastOpCourse = null;
-		try {
-			sessionStorage.removeItem("pku-last-op-course");
-		} catch (e) {}
 	}
 	function readCreditInfo(root = document) {
 		const credit = [...root.querySelectorAll("font.pkuportal-remark")].find((f) => /当前已选总学分/.test(f.textContent));
@@ -553,7 +542,10 @@
 				len: run
 			};
 		});
-		if (best.len < 2) return false;
+		if (best.len < 2) {
+			console.log("[BPE-debug] collapseScrollColumns → NO PANE (longest run = " + best.len + ")", labels.map((l, i) => l + (wanted[i] ? "*" : "")).join(" "));
+			return false;
+		}
 		const first = best.start, last = best.start + best.len - 1;
 		const span = last - first + 1;
 		const paneLabels = labels.slice(first, last + 1);
@@ -562,11 +554,12 @@
 			return i < 0 ? SCROLL_ORDER.length : i;
 		};
 		const order = paneLabels.map((_, k) => k).sort((a, b) => rankOf(paneLabels[a]) - rankOf(paneLabels[b]) || a - b);
+		const padEm = 10 / (parseFloat(getComputedStyle(grid).fontSize) || 13);
 		const paneEm = order.map((k) => {
 			const l = paneLabels[k];
 			const m = measured && measured[first + k];
 			const w = m ? m.w : SCROLL_COL_EM[l] || 8;
-			return COL.note && COL.note.includes(l) ? w * COL_NOTE_K : w;
+			return (COL.note && COL.note.includes(l) ? w * COL_NOTE_K : w) + padEm;
 		});
 		const widths = paneEm.map((w) => w.toFixed(2) + "em");
 		const convert = (row, tag) => {
@@ -611,6 +604,7 @@
 			w: paneEm.reduce((a, b) => a + b, 0),
 			floor: paneEm[0] || 8
 		};
+		console.log("[BPE-debug] collapseScrollColumns", "first=" + first, "last=" + last, "span=" + span, "labels=" + JSON.stringify(paneLabels), "em=" + JSON.stringify(paneEm.map((w) => Number(w.toFixed(2)))));
 		return true;
 	}
 	function syncScrollPanes(grid) {
@@ -695,7 +689,7 @@
 		return v[Math.min(v.length - 1, Math.floor(COL_KEEP * v.length))];
 	}
 	function measureColumns(headRow, bodyRows) {
-		return [...headRow.children].map((th, c) => {
+		const out = [...headRow.children].map((th, c) => {
 			const gutter = th.classList.contains("pku-foldcell");
 			const label = gutter ? "" : headText(th);
 			const vals = [];
@@ -707,13 +701,27 @@
 				const t = cellLineText(td);
 				if (t) texts.push(t);
 			});
+			const contentW = keepEm(vals);
+			const headerW = textEm(label) * COL_HEAD_K;
+			const longestText = texts.reduce((m, t) => t.length > m.length ? t : m, "");
 			return {
 				label,
 				gutter,
-				w: Math.max(keepEm(vals), textEm(label) * COL_HEAD_K),
-				target: columnTarget(label, texts)
+				w: Math.max(contentW, headerW),
+				target: columnTarget(label, texts),
+				_dbg: {
+					contentW,
+					headerW,
+					vals,
+					longestText
+				}
 			};
 		});
+		console.log("[BPE-debug] measureColumns — contentW vs headerW → w/t, [longest text]");
+		out.forEach((m) => {
+			console.log("  " + (m.label || "(gutter)"), "contentW=" + m._dbg.contentW.toFixed(2), "headerW=" + m._dbg.headerW.toFixed(2), "vals=" + JSON.stringify(m._dbg.vals.map((v) => Number(v.toFixed(2)))), "→ w=" + m.w.toFixed(2) + "/t" + m.target, JSON.stringify(m._dbg.longestText.slice(0, 24)));
+		});
+		return out;
 	}
 	function shrinkCols(cols, need) {
 		for (let pass = 0; pass < 24 && need > .01; pass++) {
@@ -744,7 +752,7 @@
 	function assignColumnWidths(grid, headRow, measured, pane) {
 		const cells = [...headRow.children];
 		const fs = parseFloat(getComputedStyle(grid).fontSize) || 13;
-		const padEm = 20 / fs;
+		const padEm = 10 / fs;
 		const px = grid.getBoundingClientRect().width || grid.parentElement && grid.parentElement.clientWidth || 0;
 		if (!px || !measured) return;
 		if (pane && pane.base) {
@@ -775,13 +783,13 @@
 			}
 		});
 		if (!cols.length) return;
-		const room = px / fs - cols.length * padEm;
+		const room = px / fs - cols.filter((c) => !c.pane).length * padEm;
 		if (room <= 0) return;
 		cols.forEach((c) => {
 			c.hold = COL_HOLD[c.label] || 1;
 			if (c.hold == 1 && c.w < .05) c.hold = 5;
 			const W = c.w;
-			if (c.w > .2 * room) {
+			if (!c.pane && c.w > .2 * room) {
 				c.w *= COL_WIDE_K;
 				c.reduced = true;
 			}
@@ -791,6 +799,7 @@
 		const paneCol = cols.find((c) => c.pane);
 		if (paneCol) paneCol.min = Math.min(paneCol.w, pane.floor);
 		let total = cols.reduce((a, c) => a + c.w, 0);
+		console.log("[BPE-debug] assignColumnWidths DECISION: total=" + total.toFixed(1) + " room=" + room.toFixed(1) + " → " + (total <= room ? "FITS" : "SHRINK"));
 		if (total <= room) {
 			const extra = room - total;
 			const pool = total || 1;
@@ -805,24 +814,39 @@
 			if (pane && pane.em) setPaneWidths(grid, pane);
 		} else {
 			let need = total - room;
+			console.log("[BPE-debug]   step1 initial need=" + need.toFixed(1));
 			if (paneCol) {
 				const cut = Math.min(need, paneCol.w - paneCol.min);
 				paneCol.w -= cut;
 				need -= cut;
+				console.log("[BPE-debug]   step2 cut pane by " + cut.toFixed(1) + " → need=" + need.toFixed(1));
 			}
 			need = shrinkCols(cols.filter((c) => !c.reduced && !c.pane), need);
+			console.log("[BPE-debug]   step3 shrink non-reduced cols → need=" + need.toFixed(1));
 			if (need > .01) {
-				cols.forEach((c) => {
-					c.min = 1;
-				});
-				shrinkCols(cols, need);
+				if (paneCol) {
+					const cut = Math.min(need, paneCol.w - 3);
+					paneCol.w -= cut;
+					need -= cut;
+					console.log("[BPE-debug]   step4 cut pane to 3em → need=" + need.toFixed(1));
+				}
+				if (need > .01) {
+					cols.forEach((c) => {
+						if (!c.pane) c.min = 3;
+					});
+					const leftover = shrinkCols(cols.filter((c) => !c.pane), need);
+					console.log("[BPE-debug]   step5 crush to min3 → leftover=" + leftover.toFixed(1));
+				}
 			}
 		}
-		const sum = cols.reduce((a, c) => a + c.w, 0) || 1;
+		console.log("[BPE-debug] assignColumnWidths", "room=" + room.toFixed(1), cols.map((c) => (c.pane ? "(pane)" : c.label) + "=w" + c.w.toFixed(2) + "/min" + c.min.toFixed(2) + "/t" + c.target + "/hold" + c.hold).join(" | "));
 		cols.forEach((c) => {
 			c.th.removeAttribute("width");
-			c.th.style.setProperty("width", (c.w / sum * 100).toFixed(2) + "%", "important");
+			const pad = c.pane ? 0 : padEm;
+			const frac = (c.w + pad) / (px / fs);
+			c.th.style.setProperty("width", (frac * 100).toFixed(2) + "%", "important");
 		});
+		console.log("[BPE-debug] assignColumnWidths final %", cols.map((c) => (c.pane ? "(pane)" : c.label) + "=" + ((c.w + (c.pane ? 0 : padEm)) / (px / fs) * 100).toFixed(1) + "%").join(" | "));
 		cells.forEach((th) => {
 			if (th.classList.contains("pku-dscrollcell")) return;
 			if (!th.querySelector(".pku-head")) {
@@ -836,9 +860,6 @@
 	function enhanceGrid(grid, opts) {
 		const { fold = false, groupRules = false } = opts || {};
 		const head = headerCells(grid);
-		console.log("enchance grid");
-		console.log(head.row);
-		console.log("------------");
 		if (!head) return 0;
 		head.row.classList.add("pku-head-row");
 		grid.querySelectorAll("tr.datagrid-footer").forEach((tr) => {
@@ -1151,6 +1172,19 @@
 			}));
 		} catch (e) {}
 	}
+	function dropPageCacheOnReentry() {
+		const now = cacheViewKey();
+		let last = null;
+		try {
+			last = sessionStorage.getItem(LAST_VIEW_KEY);
+		} catch (e) {}
+		if (last !== null && last !== now) try {
+			sessionStorage.removeItem(CACHE_STORE_KEY);
+		} catch (e) {}
+		try {
+			sessionStorage.setItem(LAST_VIEW_KEY, now);
+		} catch (e) {}
+	}
 	function restorePageCache(grid, cur) {
 		let stored;
 		try {
@@ -1302,6 +1336,21 @@
 		if (cell && !cell.hasAttribute("colspan")) cell.classList.add("pku-col-name");
 		return rec;
 	}
+	function requestAllRows() {
+		const total = (document.body.textContent.match(/Page\s+\d+\s+of\s+(\d+)/) || [])[1];
+		if (!total || Number(total) < 2) return false;
+		const sel = document.querySelector("select[name=\"netui_row\"]");
+		const link = document.querySelector("a[href*=\"netui_row\"]");
+		const sample = sel && sel.options.length && sel.options[0].value || link && new URL(link.href, location.href).searchParams.get("netui_row");
+		const gridName = sample && sample.split(";")[0];
+		if (!gridName) return false;
+		const current = new URL(location.href);
+		if (current.searchParams.get("netui_pagesize") === gridName + ";500") return false;
+		current.searchParams.set("netui_pagesize", gridName + ";500");
+		current.searchParams.set("netui_row", gridName + ";0");
+		location.replace(current.toString());
+		return true;
+	}
 	function buildHeader() {
 		const menu = document.querySelector("#menu");
 		if (menu) {
@@ -1341,7 +1390,6 @@
 		});
 		header.append(titlebar, nav);
 		document.body.prepend(header);
-		console.log("[Beautiful PKU Elective] header built;", nav.children.length, "links; active =", active ? active.label : "none");
 	}
 	function buildHero() {
 		const remark = [...document.querySelectorAll(".pkuportal-remark")].find((el) => el.textContent.includes(">>"));
@@ -1413,12 +1461,6 @@
 				b.innerHTML = el.innerHTML;
 				el.replaceWith(b);
 			});
-			if (isError && state.lastOpCourse) {
-				const name = document.createElement("span");
-				name.className = "pku-notice-course";
-				name.textContent = "（" + state.lastOpCourse + "）";
-				card.appendChild(name);
-			}
 			cards.push(card);
 			const outer = row.closest("table")?.closest("tr");
 			if (outer) outers.add(outer);
@@ -1537,8 +1579,9 @@
 			if (why.length) r.tr.title = why.join("\n");
 			else r.tr.removeAttribute("title");
 		});
+		const paged = filtering && !!pagerState.pagerCtl;
 		const pageStart = pagerState.searchPage * 20;
-		const onPage = new Set(matching.slice(pageStart, pageStart + 20));
+		const onPage = new Set(paged ? matching.slice(pageStart, pageStart + 20) : matching);
 		model.rows.forEach((r) => {
 			const visible = onPage.has(r);
 			r.hiddenByFilter = !visible;
@@ -1630,28 +1673,34 @@
 		input.id = "pku-course-search";
 		sbox.appendChild(input);
 		srow.append(label, sbox);
-		const climit = document.createElement("label");
-		climit.className = "pku-climit";
-		climit.textContent = "学分上限 ";
-		const cnum = document.createElement("input");
-		cnum.type = "number";
-		cnum.min = "0";
-		cnum.step = "1";
-		let savedCredit = null;
-		try {
-			savedCredit = localStorage.getItem("pku-credit-limit");
-		} catch (e) {}
-		cnum.value = savedCredit || String(25);
-		cnum.className = "pku-climit-input";
-		climit.appendChild(cnum);
-		const ctally = document.createElement("span");
-		ctally.className = "pku-climit-tally";
-		srow.append(climit, ctally);
+		const isPlan = isPlanPage();
+		let cnum = null, ctally = null;
+		if (!isPlan) {
+			const climit = document.createElement("label");
+			climit.className = "pku-climit";
+			climit.textContent = "学分上限 ";
+			cnum = document.createElement("input");
+			cnum.type = "number";
+			cnum.min = "0";
+			cnum.step = "1";
+			let savedCredit = null;
+			try {
+				savedCredit = localStorage.getItem("pku-credit-limit");
+			} catch (e) {}
+			cnum.value = savedCredit || String(25);
+			cnum.className = "pku-climit-input";
+			climit.appendChild(cnum);
+			ctally = document.createElement("span");
+			ctally.className = "pku-climit-tally";
+			srow.append(climit, ctally);
+		}
 		bar.appendChild(srow);
-		const legend = document.createElement("div");
-		legend.className = "pku-search-legend";
-		legend.textContent = "红色代表该课程时间与已经预选课程时间冲突，黄色代表时间不冲突但选择后学分将超出学分上限。颜色仅做参考，请以点击预选后的信息提示为准";
-		bar.appendChild(legend);
+		if (!isPlan) {
+			const legend = document.createElement("div");
+			legend.className = "pku-search-legend";
+			legend.textContent = "红色代表该课程时间与已经预选课程时间冲突，黄色代表时间不冲突但选择后学分将超出学分上限。颜色仅做参考，请以点击预选后的信息提示为准";
+			bar.appendChild(legend);
+		}
 		const row = document.createElement("div");
 		row.className = "pku-actions-row";
 		links.forEach((a) => {
@@ -1764,7 +1813,7 @@
 				if (!key) return;
 				facets[key] = [...f.querySelectorAll("input[type=\"checkbox\"]")].filter((cb) => cb.checked).map((cb) => cb.value);
 			});
-			const lim = parseFloat(cnum.value);
+			const lim = cnum ? parseFloat(cnum.value) : 0;
 			return {
 				q: input.value.trim().toLowerCase(),
 				facets,
@@ -1778,9 +1827,11 @@
 			const filtering = filterState.q || Object.values(filterState.facets).some((v) => v.length);
 			count.textContent = filtering ? matching + " / " + total : "";
 			setSearchPager(filtering, matching);
-			const committed = takenCredits();
-			ctally.textContent = "已选 " + fmtCredit(committed) + (filterState.creditLimit ? " / " + fmtCredit(filterState.creditLimit) : "");
-			ctally.classList.toggle("pku-climit-tally--over", !!filterState.creditLimit && committed > filterState.creditLimit);
+			if (ctally) {
+				const committed = takenCredits();
+				ctally.textContent = "已选 " + fmtCredit(committed) + (filterState.creditLimit ? " / " + fmtCredit(filterState.creditLimit) : "");
+				ctally.classList.toggle("pku-climit-tally--over", !!filterState.creditLimit && committed > filterState.creditLimit);
+			}
 		};
 		bar.addEventListener("pku-refilter", run);
 		const paint = (st) => {
@@ -1816,7 +1867,7 @@
 				run();
 			}
 		});
-		cnum.addEventListener("input", () => {
+		if (cnum) cnum.addEventListener("input", () => {
 			try {
 				localStorage.setItem("pku-credit-limit", cnum.value);
 			} catch (e) {}
@@ -2379,26 +2430,37 @@
 		return "fetching";
 	}
 	function wireActions() {
-		if (typeof window.setEleHref === "function") {
+		let eleWrapped = false;
+		const wrapEle = () => {
+			if (eleWrapped || typeof window.setEleHref !== "function") return;
+			eleWrapped = true;
 			const orig = window.setEleHref;
 			window.setEleHref = function(herfAdd, tagIdEle, courseName, classNo, index, seqNo) {
 				if (orig.apply(this, arguments)) {
 					markTimetableStale();
-					setLastOpCourse(courseName);
 					runElect(herfAdd.href);
 				}
 				return false;
 			};
-		}
-		if (typeof window.resetRandom === "function") {
+		};
+		let resetWrapped = false;
+		const wrapReset = () => {
+			if (resetWrapped || typeof window.resetRandom !== "function") return;
+			resetWrapped = true;
 			const orig = window.resetRandom;
 			window.resetRandom = function() {
 				orig.apply(this, arguments);
 				syncCreditInfo();
 			};
-		}
+		};
+		wrapEle();
+		wrapReset();
+		addEventListener("load", () => {
+			wrapEle();
+			wrapReset();
+		});
 		document.addEventListener("click", (e) => {
-			if ((e.target && e.target.closest ? e.target.closest("a[href*=\"cancelCourse.do\"]") : null) && !e.defaultPrevented) markTimetableStale();
+			if ((e.target && e.target.closest ? e.target.closest("a[href*=\"cancelCourse.do\"], a[href*=\"electCourse.do\"]") : null) && !e.defaultPrevented) markTimetableStale();
 		});
 	}
 	function runElect(url) {
@@ -2470,12 +2532,10 @@
 	function buildPage() {
 		buildHeader();
 		removeNoteLine();
-		try {
-			state.lastOpCourse = sessionStorage.getItem("pku-last-op-course") || null;
-		} catch (e) {}
+		if (isPlanPage() && requestAllRows()) return;
+		dropPageCacheOnReentry();
 		const hero = buildHero();
 		const notices = buildNotices();
-		consumeLastOpCourse();
 		if (hero || notices.length) {
 			const anchor = document.querySelector(".pku-header");
 			const frag = document.createDocumentFragment();
@@ -2499,7 +2559,7 @@
 		});
 		readCreditInfo();
 		snapshotPager();
-		const pagers = buildPager();
+		buildPager();
 		reinsertRemainRandom();
 		buildFooter();
 		const sections = buildSectionHeads();
@@ -2526,9 +2586,8 @@
 		keepQueryFields();
 		buildQueryForm();
 		wireQueryAutoSearch();
-		const timetable = buildTimetable();
+		buildTimetable();
 		wireActions();
-		console.log("[Beautiful PKU Elective] hero =", !!hero, "; notices =", notices.length, "; sections =", sections.built, "; fold controls =", folds, "; pager =", pagers, "; timetable =", timetable);
 	}
 	if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", buildPage);
 	else buildPage();

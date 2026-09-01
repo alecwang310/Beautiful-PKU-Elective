@@ -42,11 +42,15 @@ export const Title = css`
       font-size: 26px !important;
       font-weight: 600 !important;
       letter-spacing: 1px !important;
+      white-space: nowrap !important;   /* the site name never wraps to two lines */
       color: ${C.text} !important;
     }`
 
-/* Two layouts: when the screen is wide (over 900px), the logo and nav bar are on the same row and the row is sticky.
-    When the screen is narrow, the nav bar is on its own row beneath the logo and only the nav bar is sticky*/
+/* Two layouts: when the screen is wide enough that the title + logo + all tabs
+    fit on one row, that whole row sticks. Narrower, the nav bar drops to its own
+    row beneath the logo and only the nav bar is sticky. The breakpoint is sized
+    to the real content (~150px logo + 26px site name + seven tabs), not an
+    arbitrary width, so the title never gets squeezed into two lines.*/
 export const NavMenu = css`
     /* The nav bar has no padding, the padding is all in the nav items themselves. This allows the red live indicator sit directly on the lower edge */
     .pku-nav {
@@ -127,8 +131,8 @@ export const NavMenu = css`
       border-bottom: 1px solid ${C.faintLine} !important;
     }
 
-    /* ---- WIDE (>= 900px): logo + tabs on one row, whole header sticks ---- */
-    @media (min-width: 900px) {
+    /* ---- WIDE (>= 1024px): logo + tabs on one row, whole header sticks ---- */
+    @media (min-width: 1024px) {
       .pku-header {
         display: flex !important;
         align-items: stretch !important;
@@ -856,7 +860,7 @@ export const Grid = css`
       border-right: none !important;
       border-bottom: none !important;
       border-top: 1px solid ${C.gridLine} !important;
-      padding: 8px 10px !important;
+      padding: 4px 5px !important;
       vertical-align: top !important;
       overflow-wrap: anywhere !important;
     }
@@ -928,24 +932,14 @@ export const Grid = css`
     table.pku-inner td, table.pku-inner th {
       border: none !important;
       background: transparent !important;
-      padding: 8px 10px !important;
+      padding: 4px 5px !important;
       vertical-align: top !important;
       overflow-wrap: anywhere !important;
     }
-    /* The scrolling columns hold unbounded text, so they are pinned to exactly
-       two lines: short values are padded out to two, long ones clipped at two.
-       上课/考试信息 is the exception -- it holds every meeting on its own line,
-       so it keeps its natural (block) height instead of the two-line clamp. Its
-       height must stay overridable so the fold animation can collapse it. */
-    table.pku-inner td:not(.pku-info-cell) .pku-cell {
-      display: -webkit-box !important;
-      -webkit-line-clamp: 2 !important;
-      -webkit-box-orient: vertical !important;
-      overflow: hidden !important;
-      height: 3em !important;          /* 2 rows at line-height 1.5 */
-      min-height: 3em !important;
-      line-height: 1.5 !important;
-    }
+    /* Scrolling-pane columns wrap naturally by their column width; there is no
+       fixed two-line clamp, so a long 备注 shows in full instead of being cut
+       off with an ellipsis. The two-line floor and natural growth come from the
+       generic .pku-cell rule below. */
     /* the pane's header labels sit middle-aligned like the fixed header cells,
        or the scrolling titles ride high against their neighbours */
     table.datagrid tr.pku-head-row .pku-scrollcell,
@@ -1114,7 +1108,7 @@ export const Fold = css`
     table.datagrid td.pku-foldcell,
     table.datagrid th.pku-foldcell {
       width: 26px !important;
-      padding: 8px 0 8px 4px !important;
+      padding: 4px 0 4px 4px !important;
       text-align: center !important;
       vertical-align: middle !important;
     }

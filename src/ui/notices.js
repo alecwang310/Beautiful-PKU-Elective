@@ -51,13 +51,6 @@ export function collectNoticeCards(root, onlyOutcomes = false) {
       b.innerHTML = el.innerHTML;
       el.replaceWith(b);
     });
-    // error: name the course the failed operation was aimed at
-    if (isError && state.lastOpCourse) {
-      const name = document.createElement('span');
-      name.className = 'pku-notice-course';
-      name.textContent = '（' + state.lastOpCourse + '）';
-      card.appendChild(name);
-    }
     cards.push(card);
 
     // remove the original row, and the wrapper row of its nested table

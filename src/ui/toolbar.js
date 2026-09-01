@@ -1,5 +1,6 @@
 // ---- toolbar: search field, plan buttons, filter panel ----
 import { FACETS, DEFAULT_CREDIT_LIMIT } from '../config.js';
+import { isPlanPage } from '../router.js';
 import { state as appState, pagerState } from '../state.js';
 import { chevron } from './dom.js';
 import { applyFilter, takenCredits, fmtCredit } from '../grid/filter.js';
@@ -86,34 +87,41 @@ export function buildToolbar(grid) {
   sbox.appendChild(input);
   srow.append(label, sbox);
 
-  // credit ceiling, on the same line; editable, 25 by default
-  const climit = document.createElement('label');
-  climit.className = 'pku-climit';
-  climit.textContent = '学分上限 ';
-  const cnum = document.createElement('input');
-  cnum.type = 'number';
-  cnum.min = '0';
-  cnum.step = '1';
-  // credit ceiling, remembered across page changes so a navigation does not
-  // silently reset it back to the default
-  let savedCredit = null;
-  try { savedCredit = localStorage.getItem('pku-credit-limit'); } catch (e) {}
-  cnum.value = savedCredit || String(DEFAULT_CREDIT_LIMIT);
-  cnum.className = 'pku-climit-input';
-  climit.appendChild(cnum);
-  const ctally = document.createElement('span');
-  ctally.className = 'pku-climit-tally';
-  srow.append(climit, ctally);
+  // credit ceiling (only where clash/credit marking happens — not on the
+  // read-only 维护选课计划 page): editable, 25 by default
+  const isPlan = isPlanPage();
+  let cnum = null, ctally = null;
+  if (!isPlan) {
+    const climit = document.createElement('label');
+    climit.className = 'pku-climit';
+    climit.textContent = '学分上限 ';
+    cnum = document.createElement('input');
+    cnum.type = 'number';
+    cnum.min = '0';
+    cnum.step = '1';
+    // credit ceiling, remembered across page changes so a navigation does not
+    // silently reset it back to the default
+    let savedCredit = null;
+    try { savedCredit = localStorage.getItem('pku-credit-limit'); } catch (e) {}
+    cnum.value = savedCredit || String(DEFAULT_CREDIT_LIMIT);
+    cnum.className = 'pku-climit-input';
+    climit.appendChild(cnum);
+    ctally = document.createElement('span');
+    ctally.className = 'pku-climit-tally';
+    srow.append(climit, ctally);
+  }
 
   bar.appendChild(srow);
 
-  // legend under the search, before the buttons: explains the clash / credit
-  // colours. The 50px gap below it comes from .pku-actions-row's padding-top.
-  const legend = document.createElement('div');
-  legend.className = 'pku-search-legend';
-  legend.textContent =
-    '红色代表该课程时间与已经预选课程时间冲突，黄色代表时间不冲突但选择后学分将超出学分上限。颜色仅做参考，请以点击预选后的信息提示为准';
-  bar.appendChild(legend);
+  if (!isPlan) {
+    // legend under the search, before the buttons: explains the clash / credit
+    // colours. The 50px gap below it comes from .pku-actions-row's padding-top.
+    const legend = document.createElement('div');
+    legend.className = 'pku-search-legend';
+    legend.textContent =
+      '红色代表该课程时间与已经预选课程时间冲突，黄色代表时间不冲突但选择后学分将超出学分上限。颜色仅做参考，请以点击预选后的信息提示为准';
+    bar.appendChild(legend);
+  }
 
   // buttons + filter toggle, one row
   const row = document.createElement('div');
@@ -254,7 +262,7 @@ export function buildToolbar(grid) {
       facets[key] = [...f.querySelectorAll('input[type="checkbox"]')]
         .filter((cb) => cb.checked).map((cb) => cb.value);
     });
-    const lim = parseFloat(cnum.value);
+    const lim = cnum ? parseFloat(cnum.value) : 0;
     return {
       q: input.value.trim().toLowerCase(),
       facets,
@@ -275,11 +283,13 @@ export function buildToolbar(grid) {
     setSearchPager(filtering, matching);
 
     // running tally of what is already committed against the ceiling
-    const committed = takenCredits();
-    ctally.textContent = '已选 ' + fmtCredit(committed) +
-      (filterState.creditLimit ? ' / ' + fmtCredit(filterState.creditLimit) : '');
-    ctally.classList.toggle('pku-climit-tally--over',
-      !!filterState.creditLimit && committed > filterState.creditLimit);
+    if (ctally) {
+      const committed = takenCredits();
+      ctally.textContent = '已选 ' + fmtCredit(committed) +
+        (filterState.creditLimit ? ' / ' + fmtCredit(filterState.creditLimit) : '');
+      ctally.classList.toggle('pku-climit-tally--over',
+        !!filterState.creditLimit && committed > filterState.creditLimit);
+    }
   };
 
   // re-run on demand (used once every grid has been modelled)
@@ -326,7 +336,7 @@ export function buildToolbar(grid) {
     if (e.key === 'Enter') { e.preventDefault(); clearTimeout(typeTimer); pagerState.searchPage = 0; run(); }
   });
   // changing the ceiling re-marks immediately and persists the new value
-  cnum.addEventListener('input', () => {
+  if (cnum) cnum.addEventListener('input', () => {
     try { localStorage.setItem('pku-credit-limit', cnum.value); } catch (e) {}
     run();
   });

@@ -40,7 +40,7 @@ BPE通过DOM劫持和CSS重绘，实现选课系统的现代化UI与诸多提升
 src/
   main.js              入口：注入样式，按页面类型编排构建流程
   config.js            常量、列名别名与列匹配（COL、findCol 等）
-  state.js             跨模块共享的可变状态（gridModel、lastOpCourse、pagerState）
+  state.js             跨模块共享的可变状态（gridModel、pagerState）
   events.js            跨模块信号（重新过滤 pku-refilter）
   router.js            URL → 页面类型识别
 

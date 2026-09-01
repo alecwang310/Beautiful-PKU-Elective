@@ -134,17 +134,6 @@ function parseCapacity(text) {
   return m ? { limit: +m[1], taken: +m[2] } : null;
 }
 
-// The operated course name must survive the 预选 page reload, so it is kept in
-// sessionStorage until the next page reads it for the error box.
-export function setLastOpCourse(name) {
-  state.lastOpCourse = name;
-  try { sessionStorage.setItem('pku-last-op-course', name); } catch (e) {}
-}
-export function consumeLastOpCourse() {
-  state.lastOpCourse = null;
-  try { sessionStorage.removeItem('pku-last-op-course'); } catch (e) {}
-}
-
 export function readCreditInfo(root = document) {
   const credit = [...root.querySelectorAll('font.pkuportal-remark')]
     .find((f) => /当前已选总学分/.test(f.textContent));
