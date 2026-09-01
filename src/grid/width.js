@@ -27,9 +27,8 @@ export function collapseScrollColumns(grid, headRow, bodyRows, measured) {
   const labels = [...headRow.children].map(headText);
   const wanted = labels.map((l) => SCROLL_COLS.includes(l));
 
-  // Only a contiguous run can be merged without reordering columns, so take
-  // the LONGEST run of wanted columns; on a page where they are not adjacent
-  // the biggest cluster scrolls and the strays stay fixed.
+  // Decide what to merge: there are a few targets, we take the longest cluster that is all next to each other 
+  // to merge into one scrollable pane, and leave others fixed.
   let best = { start: -1, len: 0 }, run = 0;
   wanted.forEach((w, i) => {
     run = w ? run + 1 : 0;
@@ -42,7 +41,7 @@ export function collapseScrollColumns(grid, headRow, bodyRows, measured) {
   const paneLabels = labels.slice(first, last + 1);
 
   // Order the pane's columns independently of the DOM order the site ships:
-  // the time/exam info leads, 年级 sits second-last just before 自选P/NP.
+  // the 上课/考试时间 info leads, 年级 sits second-last just before 自选P/NP.
   const rankOf = (l) => {
     const i = SCROLL_ORDER.indexOf(l);
     return i < 0 ? SCROLL_ORDER.length : i;
@@ -204,8 +203,7 @@ function columnTarget(label, texts) {
 }
 
 // The width that covers all but the longest few entries. Under five entries
-// there is no distribution to speak of, so the second longest is the honest
-// answer -- the longest being the value we are deliberately not trusting.
+// there is no distribution to speak of, so we use the second longest entry
 function keepEm(vals) {
   if (!vals.length) return 0;
   const v = vals.slice().sort((a, b) => a - b);
@@ -242,8 +240,8 @@ export function measureColumns(headRow, bodyRows) {
 
 // Take `need` em out of these columns in proportion to their width, so every
 // column loses the same fraction and a narrow one is not gutted to spare a
-// wide one. A column stops at its own floor; 课程号 resists three times as
-// hard, so it is the last thing to start clipping.
+// wide one. A column stops at its own floor; 课程号 and entries shorter than 5%
+// resists three times as hard, so less clipping for them.
 function shrinkCols(cols, need) {
   for (let pass = 0; pass < 24 && need > 0.01; pass++) {
     const live = cols.filter((c) => c.w > c.min + 0.01);
@@ -281,8 +279,7 @@ export function assignColumnWidths(grid, headRow, measured, pane) {
   const px = grid.getBoundingClientRect().width
     || (grid.parentElement && grid.parentElement.clientWidth) || 0;
   if (!px || !measured) return;
-  // A resize re-runs all of this, so start from what was measured rather
-  // than from the widths the last run left behind, or they compound.
+  // A resize re-runs all of this.
   if (pane && pane.base) {
     pane.em = pane.base.slice();
     pane.w = pane.base.reduce((a, b) => a + b, 0);
@@ -306,9 +303,10 @@ export function assignColumnWidths(grid, headRow, measured, pane) {
   const room = px / fs - cols.length * padEm;
   if (room <= 0) return;
 
-  // Wide columns are pulled in so their text folds rather than running the
-  // table off the page. Reduced columns are then left alone for as long as
-  // possible: cutting them again is what makes rows grow ultra tall.
+  // We use this strategy: each column has its own min target: if any shrinking is needed, the scroll pane gets cut first, then, we
+  // shrink the rows that haven't reached this min target, then after everything reached this
+  // target, they all shrink together, and the shrink is weighed: long rows shrink more, some 
+  // specific rows like 课程号 shrinks 3x less
   cols.forEach((c) => {
     c.hold = COL_HOLD[c.label] || 1;
     if (c.hold == 1 && c.w < COL_NARROW) { c.hold = SHORT_FIELD_MULTIPLY; }
@@ -319,8 +317,8 @@ export function assignColumnWidths(grid, headRow, measured, pane) {
     // a one-line column therefore refuses to shrink at all
     c.min = (W * 1.1) / (c.target || 1);
   });
-  // the pane may shrink until its first column is fully in view -- past that
-  // there is nothing left to read without scrolling
+  // the scrolling pane may shrink until its first column is fully in view -- past that
+  // there is nothing left to read without scrolling, so we don't keep shrinking
   const paneCol = cols.find((c) => c.pane);
   if (paneCol) paneCol.min = Math.min(paneCol.w, pane.floor);
 

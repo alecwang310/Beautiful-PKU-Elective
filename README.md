@@ -13,7 +13,7 @@ BPE通过DOM劫持和CSS重绘，实现选课系统的现代化UI与诸多提升
 - 现代且美观的设计
 
 ## 安装（文件 `dist/Beautiful_pku_elective.js` 安装教程）
-安装BPE只需要dist文件夹中的Beautiful_pku_elective.user.js文件。其余文件均为开发相关。安装时只需将其全部复制后粘贴如一个脚本管理器即可。
+安装BPE只需要dist文件夹中的Beautiful_pku_elective.user.js文件。其余文件均为开发相关。安装时只需将其全部复制后粘贴至一个脚本管理器即可。
 
 文件不能直接在浏览器中双击运行，必须借助 **用户脚本管理器**（如 Tampermonkey）来注入到选课网站中。
 

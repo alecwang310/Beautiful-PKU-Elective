@@ -1,8 +1,10 @@
 // ---- grid enhancement ----
-// Turns one site grid into the reskinned table: sorts by name, splits
-// 上课/考试信息 into time + 备注, folds detail columns into a scrolling pane,
-// sizes the columns, and wires one fold control per name group. Builds the row
-// model the filter/cache layers read back out of state.gridModel.
+// Turns one site grid into the reskinned table
+// Sort by name
+// Split 上课/考试信息 into 上课/考试信息 + 备注, 
+// Fold 上课/考试信息，备注，年级，P/NP列 into a scrolling pane,
+// Size the columns, and allow rows with the same class name to fold.
+// Build the row model that state.gridModel presents.
 
 import { COL, NOTE_HEAD, findCol } from '../config.js';
 import {
@@ -19,12 +21,8 @@ import { state } from '../state.js';
 export function enhanceGrid(grid, opts) {
   const { fold = false, groupRules = false } = opts || {};
   const head = headerCells(grid);
-  console.log("enchance grid")
-  console.log(head.row);
-  console.log("------------")
   if (!head) return 0;
   head.row.classList.add('pku-head-row');
-  // the footer row carries the same legacy blue; let it inherit the page
   grid.querySelectorAll('tr.datagrid-footer').forEach((tr) => {
     tr.classList.remove('datagrid-footer');
   });
@@ -140,8 +138,7 @@ export function enhanceGrid(grid, opts) {
   }
   const pane = collapseScrollColumns.last;
   assignColumnWidths(grid, head.row, measured, pane);
-  // the shares are derived from the table's real width, so a resize re-runs
-  // them rather than leaving the layout right only at the width it loaded at
+  // For resied windows
   onWidthChange(() => assignColumnWidths(grid, head.row, measured, pane));
 
   // ---- group by name and wire one fold control per group ----
@@ -161,17 +158,13 @@ export function enhanceGrid(grid, opts) {
     g.leader.tr.firstElementChild.appendChild(btn.el);
     btn.onToggle((folded) => {
       g.leader.tr.classList.toggle('pku-f-name', folded);
-      // Swapping a cell's text to 已折叠 changes its natural height, which
-      // would resize the leader row the instant it happens -- a visible jump
-      // before the rows below even start collapsing. Pin each cell to the
-      // height it already has so only one animation is ever seen.
+      // Here, we fix the row height even after the text changes to 已折叠, to avoid complex animation syncing
+      // If anyone can resize the row height after text changes to 已折叠 with all the animations being smooth, 
+      // they are very welcom to do so
       lockCellHeights(g.leader.tr);
       // only rows the filter is showing take part in the fold
       const live = g.rows.filter((r) => !r.hiddenByFilter);
-      // The mark stands in for the rows that are not on screen, so it is
-      // shown for exactly as long as they are away: it lands with the click
-      // that folds them, and is not taken back until they are fully out
-      // again. The leader's cells are pinned above, so neither swap moves it.
+      // Display 已折叠 the moment the fold starts, and only after unfold finishes
       if (folded) {
         markFolded(g.leader, live);
         animateRows(live, true);

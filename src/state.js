@@ -1,7 +1,5 @@
 // ---- shared mutable state ----
-// Every value that more than one module reads or writes, in one place so a
-// symbol is never "module-private but referenced elsewhere" (the bug this
-// refactor exists to kill). Plain objects, no getters/setters: modules import
+// Every value that more than one module reads or writes Plain objects: modules import
 // `state` and mutate its fields directly.
 export const state = {
   // grid element -> its row model, built by enhanceGrid and read by filter,
@@ -13,7 +11,7 @@ export const state = {
   lastOpCourse: null,
 };
 
-// The built-in pager, repurposed client-side while a search is active.
+// The original pager. When there is any thing being searched, this is no longer used
 export const pagerState = {
   searchPage: 0,      // current search-result page (0-based)
   searchActive: false,

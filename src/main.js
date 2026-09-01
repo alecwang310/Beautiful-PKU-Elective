@@ -111,10 +111,6 @@ function buildPage() {
   wireQueryAutoSearch();
   const timetable = buildTimetable();
   wireActions();
-
-  console.log('[Beautiful PKU Elective] hero =', !!hero, '; notices =', notices.length,
-    '; sections =', sections.built, '; fold controls =', folds,
-    '; pager =', pagers, '; timetable =', timetable);
 }
 
 if (document.readyState === 'loading') {

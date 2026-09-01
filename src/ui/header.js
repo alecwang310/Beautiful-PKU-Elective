@@ -49,7 +49,4 @@ export function buildHeader() {
 
   header.append(titlebar, nav);
   document.body.prepend(header);
-
-  console.log('[Beautiful PKU Elective] header built;', nav.children.length, 'links; active =',
-    active ? active.label : 'none');
 }
