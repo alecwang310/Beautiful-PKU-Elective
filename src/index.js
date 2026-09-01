@@ -1,5 +1,13 @@
 import { PKU_LOGO } from './config.js';
 import {
+  COL, findCol, parseInfoCell, headerCells, headText, cellText,
+  dropLegacyRowStyling, slotsClash, DEFAULT_CREDIT_LIMIT,
+  setLastOpCourse, consumeLastOpCourse, takeNavState, readCreditInfo,
+  creditInfoText, reinsertRemainRandom, syncCreditInfo,
+  captureRowModel, captureRowValues,
+} from './table.js';
+import { buildPager, setSearchPager, SEARCH_PAGE_SIZE, pagerState } from './pager.js';
+import {
   Root, Title, NavMenu, PageHero, Noticies,
   SectionHeads, Toolbar, CourseQuery, FilterToggle, Cache, Chevron,
   FilterPanel, Footer, Pager, Grid, Warnings, Fold, Timetable,
@@ -550,12 +558,12 @@ GM_addStyle(STYLES);
     input.addEventListener('input', () => {
       clearPin();
       clearTimeout(typeTimer);
-      searchPage = 0;   // a new search starts back on the first page
+      pagerState.searchPage = 0;   // a new search starts back on the first page
       typeTimer = setTimeout(run, 500);
     });
     // Enter applies at once rather than waiting out the delay
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); clearPin(); clearTimeout(typeTimer); searchPage = 0; run(); }
+      if (e.key === 'Enter') { e.preventDefault(); clearPin(); clearTimeout(typeTimer); pagerState.searchPage = 0; run(); }
     });
     // changing the ceiling re-marks immediately and persists the new value
     cnum.addEventListener('input', () => {
@@ -564,7 +572,7 @@ GM_addStyle(STYLES);
     });
     // ticking a box applies immediately
     panel.addEventListener('change', (e) => {
-      if (e.target.type === 'checkbox') { clearPin(); searchPage = 0; run(); }
+      if (e.target.type === 'checkbox') { clearPin(); pagerState.searchPage = 0; run(); }
     });
 
     // clicking 重置筛选 clears every choice and the search box
@@ -642,434 +650,6 @@ GM_addStyle(STYLES);
     });
     if (host.isConnected) host.remove();
     return 1;
-  }
-
-  // ---- pager ----
-  // The site renders "Page 1 of 4  First / Previous   Next / Last", where the
-  // unavailable ends are plain text and the rest are links, plus a 跳转到
-  // <select> whose options carry the exact netui_row offset for every page.
-  // That select is the source of truth: each page's URL is built from it.
-  function buildPager() {
-    // Every grid ends with a "Page X of Y  First / Previous  Next / Last" row.
-    // Only multi-page grids also carry a 跳转到 <select> whose options hold each
-    // page's netui_row offset; single-page grids have the text alone, so the row
-    // is the anchor and the select is used when it happens to be there.
-    const rows = [...document.querySelectorAll('table.datagrid tr')].filter((tr) =>
-      /Page\s+\d+\s+of\s+\d+/.test(tr.textContent));
-    if (!rows.length) return 0;
-
-    let built = 0;
-    rows.forEach((textRow) => {
-      const grid = textRow.closest('table.datagrid');
-      if (!grid || textRow.dataset.pkuPager) return;
-
-      const m = textRow.textContent.match(/Page\s+(\d+)\s+of\s+(\d+)/);
-      if (!m) return;
-      const cur = parseInt(m[1], 10) - 1, pages = parseInt(m[2], 10);
-
-      // the select may live in this row or the next; it belongs to this grid
-      const sel = grid.querySelector('select[name="netui_row"]');
-      const opts = sel ? [...sel.options] : [];
-
-      const hrefFor = (i) => {
-        if (!opts[i]) return null;
-        const url = new URL(location.href);
-        const value = opts[i].value;                  // "grid;40"
-        const grid0 = value.split(';')[0];
-        url.searchParams.set('netui_row', value);
-        const size = new URLSearchParams(location.search).get('netui_pagesize');
-        if (size) {
-          url.searchParams.set('netui_pagesize', size);
-        } else if (opts.length > 1) {
-          const step = Math.abs(parseInt(opts[1].value.split(';')[1], 10)
-                              - parseInt(opts[0].value.split(';')[1], 10));
-          if (step > 0) url.searchParams.set('netui_pagesize', grid0 + ';' + step);
-        }
-        return url.toString();
-      };
-
-      const bar = document.createElement('div');
-      bar.className = 'pku-pager';
-
-      const chev = (dir, n) =>
-        ('<span class="pku-pg-chev pku-pg-chev--' + dir + '"></span>').repeat(n);
-
-      const mk = (kind, label, target, aria) => {
-        const href = target === null ? null : hrefFor(target);
-        const el = document.createElement(href ? 'a' : 'span');
-        el.className = 'pku-pg pku-pg--' + kind + (href ? '' : ' pku-pg--off');
-        el.setAttribute('aria-label', aria);
-        if (href) el.href = href;
-        el.innerHTML = label;
-        return el;
-      };
-
-      const back = cur > 0, fwd = cur < pages - 1;
-      const info = document.createElement('span');
-      info.className = 'pku-pg-info';
-      info.textContent = 'page ' + (cur + 1) + ' of ' + pages;
-
-      const first = mk('edge', chev('left', 2), back ? 0 : null, '第一页');
-      const prev = mk('step', chev('left', 1), back ? cur - 1 : null, '上一页');
-      const next = mk('step', chev('right', 1), fwd ? cur + 1 : null, '下一页');
-      const last = mk('edge', chev('right', 2), fwd ? pages - 1 : null, '最后一页');
-      bar.append(first, prev, info, next, last);
-      // a pager jump lands on the list (not the top) and reruns the search
-      bar.addEventListener('click', (e) => {
-        const a = e.target.closest('a.pku-pg');
-        if (a && a.getAttribute('href')) rememberNav({ q: currentSearchQuery() });
-      });
-
-      let jump = null;
-      if (sel && opts.length > 1) {
-        jump = document.createElement('label');
-        jump.className = 'pku-pg-jump';
-        jump.textContent = '跳转到 ';
-
-        // A fresh select: the site's own onchange calls doPagerSubmit(), which
-        // submits document.forms["pageForm"]. Moving the original out of that
-        // form breaks it, so navigate to the page URL directly instead.
-        const pick = document.createElement('select');
-        opts.forEach((o, i) => {
-          const opt = document.createElement('option');
-          opt.value = String(i);
-          opt.textContent = o.textContent.trim() || String(i + 1);
-          if (i === cur) opt.selected = true;
-          pick.appendChild(opt);
-        });
-        pick.addEventListener('change', () => {
-          const href = hrefFor(Number(pick.value));
-          if (href) { rememberNav({ q: currentSearchQuery() }); location.assign(href); }
-        });
-        jump.appendChild(pick);
-        bar.appendChild(jump);
-        (sel.closest('form') || sel).remove();
-      }
-
-      // store the controls so a search can repurpose this pager client-side
-      pagerCtl = {
-        first, prev, next, last, info, jump,
-        back, fwd, serverInfo: 'page ' + (cur + 1) + ' of ' + pages,
-      };
-
-      // client-side navigation while a search is active (otherwise the default
-      // <a> href lets the site's own paging proceed as before)
-      const navTo = (fn) => (e) => {
-        if (!searchActive) return;
-        e.preventDefault();
-        searchPage = fn(searchPage);
-        const npages = Math.max(1, Math.ceil(searchTotal / SEARCH_PAGE_SIZE));
-        searchPage = Math.max(0, Math.min(npages - 1, searchPage));
-        document.querySelectorAll('.pku-toolbar').forEach((b) =>
-          b.dispatchEvent(new Event('pku-refilter')));
-      };
-      first.addEventListener('click', navTo(() => 0));
-      prev.addEventListener('click', navTo((p) => p - 1));
-      next.addEventListener('click', navTo((p) => p + 1));
-      last.addEventListener('click', navTo(() => 1e9));
-
-      const host = document.createElement('div');
-      host.className = 'pku-pager-cell';
-      host.appendChild(bar);
-
-      // the pager is a sibling of the table, not a row inside it, so the table
-      // (and the section wrapper around it) ends at the last data row. On a
-      // re-run after 预选 the wrapper already exists, so park the pager after it.
-      (grid.closest('.pku-section-body') || grid).after(host);
-      textRow.remove();
-      // a leftover row that only held the select is now empty
-      [...grid.querySelectorAll('tr')].forEach((tr) => {
-        if (!tr.textContent.trim() && !tr.querySelector('input, select, a')) {
-          tr.remove();
-        }
-      });
-      built++;
-    });
-
-    return built;
-  }
-
-  // ---- grid: one flat table, sorted by name, foldable by name ----
-  // Zebra striping is assigned once, over the sorted-and-unfolded order, and
-  // never recomputed, so folding never restripes the table.
-  // Column headers vary by page: 预选 says 课程名 / 上课/考试信息, while
-  // 维护选课计划 says 课程名称 / 上课时间. Each entry lists the aliases to try.
-  const COL = {
-    name: ['课程名', '课程名称'],
-    info: ['上课/考试信息', '上课时间', '教室信息'],
-    note: ['备注'],
-  };
-
-  function findCol(labels, aliases) {
-    for (const a of aliases) {
-      const i = labels.indexOf(a);
-      if (i >= 0) return i;
-    }
-    return -1;
-  }
-  // Reads the 上课/考试信息 cell's lines, honouring its <br> separators rather
-  // than collapsing them into one run of text.
-  function infoLines(cell) {
-    if (!cell) return [];
-    return (cell.innerHTML || '')
-      .split(/<br\s*\/?>/i)
-      .map((frag) => {
-        // run each line through a detached node so HTML entities decode the
-        // way the browser already decoded them in the live DOM -- stripping
-        // tags off the raw string leaves "&amp;" (and friends) as literal glyphs
-        const box = document.createElement("div");
-        box.innerHTML = frag;
-        return box.textContent.replace(/\s+/g, " ").trim();
-      })
-      .filter(Boolean);
-  }
-
-  // Meeting lines sort by day then start period, earliest in the week first.
-  // Lines parseSlots cannot read (e.g. a bare note) fall to the bottom, keeping
-  // their relative order.
-  function byWeek(a, b) {
-    const sa = parseSlots(a)[0], sb = parseSlots(b)[0];
-    if (sa && sb) {
-      if (sa.day !== sb.day) return sa.day - sb.day;
-      if (sa.from !== sb.from) return sa.from - sb.from;
-      return 0;
-    }
-    if (sa) return -1;
-    if (sb) return 1;
-    return 0;
-  }
-
-  const NOTE_HEAD = '备注';
-
-  // Splits the 上课/考试信息 cell into: sorted class-meeting lines with the exam
-  // line appended underneath (each on its own <br> line), and the 备注. The 备注
-  // runs from its 备注： marker to the end of the line, so an unclosed paren or
-  // quote (a server typo) cannot swallow the rest of the cell.
-  function parseInfoCell(cell) {
-    const lines = infoLines(cell);
-    const cls = [];
-    const examLines = [];
-    const notes = [];
-    for (const line of lines) {
-      if (/考试(?:时间|方式)/.test(line)) {
-        const cleaned = line.replace(/[；;]\s*$/, '').trim();
-        if (cleaned) examLines.push(cleaned);
-        continue;
-      }
-      const ni = line.search(/[(（]\s*备注\s*[:：]?/);
-      if (ni >= 0) {
-        let note = line.slice(ni)
-          .replace(/^[(（]\s*备注\s*[:：]?\s*/, '')
-          .replace(/[)）]+$/g, '').trim();
-        if (note) notes.push(note);
-        const rest = line.slice(0, ni).trim();
-        if (rest) cls.push(rest);
-        continue;
-      }
-      cls.push(line);
-    }
-    cls.sort(byWeek);
-    return { time: [...cls, ...examLines].join('<br>'), note: notes.join('；') };
-  }
-
-  function headerCells(grid) {
-    const row = grid.querySelector('tr.datagrid-header') || grid.querySelector('tr:has(th)');
-    return row ? { row, cells: [...row.children] } : null;
-  }
-
-  function headText(th) {
-    return th.textContent.replace(/[\s ]+/g, '').trim();
-  }
-
-  function cellText(row, i) {
-    const c = i >= 0 && row.children[i];
-    return c ? c.textContent.replace(/[\s ]+/g, ' ').trim() : '';
-  }
-
-  // ele.js swaps a row's className to datagrid-all on mouseover, which paints
-  // it yellow-green. Those handlers are dropped so hover is ours alone.
-  function dropLegacyRowStyling(row) {
-    row.onmouseover = null;
-    row.onmouseout = null;
-    row.classList.remove('datagrid-even', 'datagrid-odd', 'datagrid-all');
-    row.removeAttribute('bgcolor');
-    [...row.children].forEach((c) => {
-      c.classList.remove('datagrid', 'gridStyle-tr-data', 'gridStyle-tr-alt-data');
-      c.removeAttribute('bgcolor');
-      c.style.removeProperty('background-color');
-    });
-  }
-
-  // opts.fold      - group rows by course name behind a fold control
-  // opts.groupRules - draw a rule where the course name changes
-  // The 已选列表 grid takes the plain defaults: no folding, ordinary row
-  // separators only.
-  // ---- row model, for search and filtering ----
-  // Meeting slots, used for conflict detection. Rooms are skipped because a
-  // room number runs straight into the next week range ("一教101" + "1~16周").
-  function parseSlots(text) {
-    const t = text.replace(/[\s\u00a0]+/g, '');
-    const DAYS = '一二三四五六日';
-    return [...t.matchAll(/(每周|双周|单周)?周([一二三四五六日])(\d{1,2})~(\d{1,2})节/g)]
-      .map((m) => ({
-        parity: m[1] || '每周',
-        day: DAYS.indexOf(m[2]),
-        from: parseInt(m[3], 10),
-        to: parseInt(m[4], 10),
-      }));
-  }
-
-  // Two slots clash when they share a day, overlap in periods, and their week
-  // parities can coincide (双周 and 单周 never do).
-  function slotsClash(a, b) {
-    if (a.day !== b.day) return false;
-    if (a.from > b.to || b.from > a.to) return false;
-    if ((a.parity === '双周' && b.parity === '单周') ||
-        (a.parity === '单周' && b.parity === '双周')) return false;
-    return true;
-  }
-
-  // "80 / 35" -> { limit: 80, taken: 35 }
-  function parseCapacity(text) {
-    const m = text.match(/(\d+)\s*\/\s*(\d+)/);
-    return m ? { limit: +m[1], taken: +m[2] } : null;
-  }
-
-  const DEFAULT_CREDIT_LIMIT = 25;
-
-  // ---- credit / willingness tally, shown beside each 预选 list title ----
-  // The values come from the 已选列表 footer (当前已选总学分 and 剩余意愿值), which
-  // buildPager() removes, so they are read up front and re-surfaced in the titles.
-  let CREDIT_INFO = null;     // { credit: string|null, remain: string|null }
-  let LAST_OP_COURSE = null;  // name of the course just operated on (for errors)
-
-  // The operated course name must survive the 预选 page reload, so it is kept in
-  // sessionStorage until the next page reads it for the error box.
-  function setLastOpCourse(name) {
-    LAST_OP_COURSE = name;
-    try { sessionStorage.setItem('pku-last-op-course', name); } catch (e) {}
-  }
-  function consumeLastOpCourse() {
-    LAST_OP_COURSE = null;
-    try { sessionStorage.removeItem('pku-last-op-course'); } catch (e) {}
-  }
-
-  // Page jumps (pager, 第N页) should land on the list, not the page top, and a
-  // 第N页 jump should restore the search and pin the clicked course. This intent
-  // is parked in sessionStorage so it survives the reload.
-  function rememberNav(opts = {}) {
-    try {
-      sessionStorage.setItem('pku-nav', JSON.stringify({
-        q: opts.q || '',
-        pin: opts.pin || '',
-      }));
-    } catch (e) {}
-  }
-  function currentSearchQuery() {
-    return (document.getElementById('pku-course-search')?.value || '').trim();
-  }
-
-  function takeNavState() {
-    let s = null;
-    try { s = JSON.parse(sessionStorage.getItem('pku-nav') || 'null'); } catch (e) {}
-    try { sessionStorage.removeItem('pku-nav'); } catch (e) {}
-    return s;   // null when there was no pending jump
-  }
-
-  function readCreditInfo(root = document) {
-    const credit = [...root.querySelectorAll('font.pkuportal-remark')]
-      .find((f) => /当前已选总学分/.test(f.textContent));
-    const remain = root.getElementById('remainRandom');
-    if (!credit && !remain) { CREDIT_INFO = null; return; }
-    CREDIT_INFO = {
-      credit: credit ? (credit.textContent.match(/[\d.]+/) || [null])[0] : null,
-      remain: remain ? remain.textContent.trim() : null,
-    };
-  }
-
-  function creditInfoText() {
-    if (!CREDIT_INFO) return null;
-    const c = CREDIT_INFO.credit != null ? CREDIT_INFO.credit : '0';
-    const r = CREDIT_INFO.remain != null ? CREDIT_INFO.remain : '0';
-    return '已选 ' + c + ' 学分，剩余意愿点数：' + r;
-  }
-
-  // buildPager removes the site's <span id="remainRandom">, but resetRandom (the
-  // site's own AJAX 修改 handler) writes to it. Re-insert a hidden copy so that
-  // update keeps working, then push the fresh value into the visible titles.
-  function reinsertRemainRandom() {
-    if (document.getElementById('remainRandom')) return;
-    const span = document.createElement('span');
-    span.id = 'remainRandom';
-    span.hidden = true;
-    span.textContent = (CREDIT_INFO && CREDIT_INFO.remain) || '0';
-    document.body.appendChild(span);
-    // catch any change to the value (resetRandom's $.ajax writes it) and refresh
-    // the visible tally, even if the resetRandom wrapper was not installed
-    if (typeof MutationObserver === 'function') {
-      new MutationObserver(() => syncCreditInfo()).observe(span, {
-        childList: true, subtree: true, characterData: true,
-      });
-    }
-  }
-
-  function syncCreditInfo() {
-    const remain = document.getElementById('remainRandom');
-    if (CREDIT_INFO && remain) CREDIT_INFO.remain = remain.textContent.trim();
-    const txt = creditInfoText();
-    document.querySelectorAll('.pku-credit-info').forEach((el) => {
-      if (txt != null) el.textContent = txt;
-    });
-  }
-
-  const SEARCH_COLS = {
-    id: ['课程号'],
-    name: ['课程名', '课程名称'],
-    teacher: ['教师'],
-  };
-  const FILTER_COLS = {
-    '课程类别': ['课程类别'],
-    '学分': ['学分'],
-    '开课单位': ['开课单位'],
-  };
-
-  // Reads each row's searchable and filterable values into the row record.
-  // Called while the header and data cells still line up -- before the fold
-  // column and the scrolling pane change the children indices.
-  function captureRowModel(headRow, rows) {
-    const labels = [...headRow.children].map(headText);
-    rows.forEach((r) => captureRowValues(labels, r));
-    return labels;
-  }
-
-  // Reads one row's values given the header labels its cells line up with.
-  function captureRowValues(labels, r) {
-    const at = (aliases) => findCol(labels, aliases);
-    const iId = at(SEARCH_COLS.id);
-    const iName = at(SEARCH_COLS.name);
-    const iTeacher = at(SEARCH_COLS.teacher);
-    const iInfo = findCol(labels, COL.info);
-    const iCap = labels.findIndex((l) => /限数|已选/.test(l) && l.includes('/'));
-
-    const facetIdx = {};
-    Object.entries(FILTER_COLS).forEach(([key, aliases]) => {
-      facetIdx[key] = at(aliases);
-    });
-
-    const txt = (tr, i) => {
-      const c = i >= 0 && tr.children[i];
-      return c ? c.textContent.replace(/[\s\u00a0]+/g, ' ').trim() : '';
-    };
-
-    r.name = txt(r.tr, iName);
-    r.q = [txt(r.tr, iId), txt(r.tr, iName), txt(r.tr, iTeacher)]
-      .join(' ').toLowerCase();
-    r.facets = {};
-    Object.keys(FILTER_COLS).forEach((k) => { r.facets[k] = txt(r.tr, facetIdx[k]); });
-    r.slots = iInfo >= 0 ? parseSlots(txt(r.tr, iInfo)) : [];
-    r.cap = iCap >= 0 ? parseCapacity(txt(r.tr, iCap)) : null;
-    const cr = parseFloat(txt(r.tr, at(['学分'])));
-    r.credit = isNaN(cr) ? 0 : cr;
   }
 
   const GRID_MODEL = new WeakMap();
@@ -1432,11 +1012,6 @@ GM_addStyle(STYLES);
   // Applies the current state to a grid: hides rows that do not match, then
   // rebuilds the name groups over what is left so zebra striping, the thick
   // rules and the fold controls all describe the visible table.
-  const SEARCH_PAGE_SIZE = 20;
-  let searchPage = 0;   // current search-result page (0-based)
-  let searchActive = false;
-  let searchTotal = 0;
-  let pagerCtl = null;  // the built-in pager's controls, repurposed by search
 
   function applyFilter(grid, state) {
     const model = GRID_MODEL.get(grid);
@@ -1481,7 +1056,7 @@ GM_addStyle(STYLES);
 
     // client-side pagination over the matching rows, in their (already
     // name-sorted) order: show only the 20 on the current search page.
-    const pageStart = searchPage * SEARCH_PAGE_SIZE;
+    const pageStart = pagerState.searchPage * SEARCH_PAGE_SIZE;
     const onPage = new Set(matching.slice(pageStart, pageStart + SEARCH_PAGE_SIZE));
     model.rows.forEach((r) => {
       const visible = onPage.has(r);
@@ -1501,33 +1076,6 @@ GM_addStyle(STYLES);
 
     restripe(model);
     return matching.length;
-  }
-
-  // Switches the built-in pager between its server-page behaviour (empty search)
-  // and client-side search pages (20 per page). The buttons keep their original
-  // markup and hrefs; the click handlers installed in buildPager pick which to use.
-  function setSearchPager(filtering, total) {
-    searchActive = filtering;
-    searchTotal = total;
-    if (!pagerCtl) return;
-    const c = pagerCtl;
-    const pages = Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE));
-    if (searchPage >= pages) searchPage = pages - 1;
-    if (filtering) {
-      c.info.textContent = 'page ' + (searchPage + 1) + ' of ' + pages;
-      c.first.classList.toggle('pku-pg--off', searchPage === 0);
-      c.prev.classList.toggle('pku-pg--off', searchPage === 0);
-      c.next.classList.toggle('pku-pg--off', searchPage >= pages - 1);
-      c.last.classList.toggle('pku-pg--off', searchPage >= pages - 1);
-      if (c.jump) c.jump.style.display = 'none';
-    } else {
-      c.info.textContent = c.serverInfo;
-      c.first.classList.toggle('pku-pg--off', !c.back);
-      c.prev.classList.toggle('pku-pg--off', !c.back);
-      c.next.classList.toggle('pku-pg--off', !c.fwd);
-      c.last.classList.toggle('pku-pg--off', !c.fwd);
-      if (c.jump) c.jump.style.display = '';
-    }
   }
 
   // Zebra and group rules are recomputed over the VISIBLE rows only, so the

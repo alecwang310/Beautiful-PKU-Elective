@@ -6,7 +6,6 @@ export const Root = css`
     body { margin: 0 !important; background: #fff !important; }
 
     :root {
-
       --pku-gutter: 24px;    /* page-edge gutter; title bar and nav share it */
       --pku-tab-pad: 14px;   /* horizontal padding inside one tab */
       --pku-nav-gap: 12px;   /* wide layout: gap from the title bar to tab #1 */
@@ -26,24 +25,24 @@ export const Root = css`
     }`
 export const Title = css`
     .pku-titlebar {
-    display: flex !important;
-    align-items: center !important;
-    gap: 14px !important;
-    padding: var(--pku-title-pad-y) var(--pku-gutter) !important;
-    background: ${C.headerBg} !important;
-    color: ${C.text} !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 14px !important;
+      padding: var(--pku-title-pad-y) var(--pku-gutter) !important;
+      background: ${C.headerBg} !important;
+      color: ${C.text} !important;
     }
     .pku-logo {
-    height: 42px !important;
-    width: auto !important;
-    filter: brightness(0) !important;
+      height: 42px !important;
+      width: auto !important;
+      filter: brightness(0) !important;
     }
     .pku-title {
-    margin: 0 !important;
-    font-size: 26px !important;
-    font-weight: 600 !important;
-    letter-spacing: 1px !important;
-    color: ${C.text} !important;
+      margin: 0 !important;
+      font-size: 26px !important;
+      font-weight: 600 !important;
+      letter-spacing: 1px !important;
+      color: ${C.text} !important;
     }`
 
 /* Two layouts: when the screen is wide (over 900px), the logo and nav bar are on the same row and the row is sticky.
@@ -440,9 +439,8 @@ export const CourseQuery = css`
        are the sole exception. */
 
     /* ---- course query form ----
-       Only the course type is rebuilt here: its radios move into one segmented
-       selector and the table they sat in is hidden. Everything below it keeps
-       the page's own markup and its own look. */
+       Only the course type selector is rebuilt here: its radios move into one segmented
+       selector and the table they sat in is hidden. I did not change the filters as that would require too much work */
     .pku-qform {
       width: var(--pku-content-w) !important;
       margin: 0 auto 4px !important;
