@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "description": "Beautiful PKU Elective，简称BPE，是用来提高选课效率的userscript。其通过重新写选课网站前端提供了诸多便利的功能和一个美丽的界面。该程序不提供任何刷课，辅助抢课等违反北京大学校规的功能。",
   "type": "module",
-  "main": "src/index.js",
+  "main": "src/main.js",
   "scripts": {
     "build": "vite build",
-    "dev": "vite build --watch"
+    "dev": "vite build --watch",
+    "lint": "eslint src"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "eslint": "^10.9.1",
+    "globals": "^17.11.0",
+    "lightningcss": "^1.33.0",
     "vite": "^8.2.2",
     "vite-plugin-monkey": "^8.1.1"
   },

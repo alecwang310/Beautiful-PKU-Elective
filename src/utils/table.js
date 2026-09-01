@@ -1,41 +1,17 @@
-// ---- grid: one flat table, sorted by name, foldable by name ----
-// Zebra striping is assigned once, over the sorted-and-unfolded order, and
-// never recomputed, so folding never restripes the table.
-// Column headers vary by page: 预选 says 课程名 / 上课/考试信息, while
-// 维护选课计划 says 课程名称 / 上课时间. Each entry lists the aliases to try.
-// This is used to split out 备注 and affects layout calculation.
+// ---- row model + credit tally ----
+// Everything that reads a grid's rows into records the search/filter/cache
+// layers work with, plus the 已选 credit/willingness tally. Column names and
+// the label-alias "match stuff" live in config.js; shared mutable state lives
+// in state.js.
+
+import { COL, FILTER_COLS, findCol } from '../config.js';
+import { state } from '../state.js';
 
 // ---- credit / willingness tally, shown beside each 预选 list title ----
 // The values come from the 已选列表 footer (当前已选总学分 and 剩余意愿值), which
 // buildPager() removes, so they are read up front and re-surfaced in the titles.
 let CREDIT_INFO = null;     // { credit: string|null, remain: string|null }
-let LAST_OP_COURSE = null;  // name of the course just operated on (for errors like time collisions, so the user can see which course just had a collision) 
 
-export const COL = {
-  id: ['课程号'],
-  name: ['课程名', '课程名称'],
-  teacher: ['教师'],
-  info: ['上课/考试信息', '上课时间', '教室信息'],
-  note: ['备注'],
-};
-
-export const NOTE_HEAD = '备注';
-
-export const FILTER_COLS = {
-  '课程类别': ['课程类别'],
-  '学分': ['学分'],
-  '开课单位': ['开课单位'],
-};
-
-export const DEFAULT_CREDIT_LIMIT = 25;
-
-export function findCol(labels, aliases) {
-  for (const a of aliases) {
-    const i = labels.indexOf(a);
-    if (i >= 0) return i;
-  }
-  return -1;
-}
 // Reads the 上课/考试信息 cell's lines, honouring its <br> separators rather
 // than collapsing them into one run of text.
 function infoLines(cell) {
@@ -127,15 +103,11 @@ export function dropLegacyRowStyling(row) {
   });
 }
 
-// opts.fold      - group rows by course name behind a fold control
-// opts.groupRules - draw a rule where the course name changes
-// The 已选列表 grid takes the plain defaults: no folding, ordinary row
-// separators only.
 // ---- row model, for search and filtering ----
 // Meeting slots, used for conflict detection. Rooms are skipped because a
 // room number runs straight into the next week range ("一教101" + "1~16周").
 function parseSlots(text) {
-  const t = text.replace(/[\s\u00a0]+/g, '');
+  const t = text.replace(/[\s ]+/g, '');
   const DAYS = '一二三四五六日';
   return [...t.matchAll(/(每周|双周|单周)?周([一二三四五六日])(\d{1,2})~(\d{1,2})节/g)]
     .map((m) => ({
@@ -157,7 +129,7 @@ export function slotsClash(a, b) {
 }
 
 // "80 / 35" -> { limit: 80, taken: 35 }
-export function parseCapacity(text) {
+function parseCapacity(text) {
   const m = text.match(/(\d+)\s*\/\s*(\d+)/);
   return m ? { limit: +m[1], taken: +m[2] } : null;
 }
@@ -165,19 +137,12 @@ export function parseCapacity(text) {
 // The operated course name must survive the 预选 page reload, so it is kept in
 // sessionStorage until the next page reads it for the error box.
 export function setLastOpCourse(name) {
-  LAST_OP_COURSE = name;
+  state.lastOpCourse = name;
   try { sessionStorage.setItem('pku-last-op-course', name); } catch (e) {}
 }
 export function consumeLastOpCourse() {
-  LAST_OP_COURSE = null;
+  state.lastOpCourse = null;
   try { sessionStorage.removeItem('pku-last-op-course'); } catch (e) {}
-}
-
-export function takeNavState() {
-  let s = null;
-  try { s = JSON.parse(sessionStorage.getItem('pku-nav') || 'null'); } catch (e) {}
-  try { sessionStorage.removeItem('pku-nav'); } catch (e) {}
-  return s;   // null when there was no pending jump
 }
 
 export function readCreditInfo(root = document) {
@@ -251,7 +216,7 @@ export function captureRowValues(labels, r) {
 
   const txt = (tr, i) => {
     const c = i >= 0 && tr.children[i];
-    return c ? c.textContent.replace(/[\s\u00a0]+/g, ' ').trim() : '';
+    return c ? c.textContent.replace(/[\s ]+/g, ' ').trim() : '';
   };
 
   r.name = txt(r.tr, iName);

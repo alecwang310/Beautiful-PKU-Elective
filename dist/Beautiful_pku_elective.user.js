@@ -44,1328 +44,34 @@
 		headBg: "#f0f4f8"
 	};
 	var css = String.raw;
-	var Root = css`
-    table:has(#menu) { display: none !important; }
-    body { margin: 0 !important; background: #fff !important; }
-
-    :root {
-      --pku-gutter: 24px;    /* page-edge gutter; title bar and nav share it */
-      --pku-tab-pad: 14px;   /* horizontal padding inside one tab */
-      --pku-nav-gap: 12px;   /* wide layout: gap from the title bar to tab #1 */
-      --pku-content-w: 95%;  /* matches the site's own centered content table */
-      --pku-notice-pad: 16px 20px;  /* breathing room around notice text */
-      --pku-title-pad-y: 14px; /* title bar vertical padding; same at every width
-                                  so the logo never shifts across the breakpoint */
-      /* the hover pill is sized as padding AROUND the label rather than as an
-         inset from the tab, so it hugs the text: just a little taller than the
-         glyphs, with a bit of room either side */
-      --pku-tab-pad-y: 9px;    /* vertical padding inside one tab */
-      --pku-hover-pad-y: 8px;  /* pill padding above/below the text */
-      --pku-hover-pad-x: 12px; /* pill padding left/right of the text */
-      --pku-toolbar-pad-x: 14px;  /* toolbar side padding; its rule cancels it */
-      --pku-section-rule-gap: 16px;  /* space between a section title and its rule */
-      --pku-search-gap: 50px;  /* space under the search line, above the buttons */
-    }`;
-	var Title = css`
-    .pku-titlebar {
-      display: flex !important;
-      align-items: center !important;
-      gap: 14px !important;
-      padding: var(--pku-title-pad-y) var(--pku-gutter) !important;
-      background: ${C.headerBg} !important;
-      color: ${C.text} !important;
-    }
-    .pku-logo {
-      height: 42px !important;
-      width: auto !important;
-      filter: brightness(0) !important;
-    }
-    .pku-title {
-      margin: 0 !important;
-      font-size: 26px !important;
-      font-weight: 600 !important;
-      letter-spacing: 1px !important;
-      color: ${C.text} !important;
-    }`;
-	var NavMenu = css`
-    /* The nav bar has no padding, the padding is all in the nav items themselves. This allows the red live indicator sit directly on the lower edge */
-    .pku-nav {
-      display: flex !important;
-      align-items: stretch !important;
-      gap: 2px !important;
-      /* tab padding supplies the rest of the gutter, so tab text lines up
-         with the title bar's left edge instead of sitting 11px further in */
-      padding: 0 calc(var(--pku-gutter) - var(--pku-tab-pad)) !important;
-      background: ${C.headerBg} !important;
-    }
-    .pku-nav-link,
-    .pku-nav-link:link,
-    .pku-nav-link:visited,
-    .pku-nav-link:active {
-      /* display:flex is here to ensure the live indicator is exactly at the bottom of the seperator, not floating.
-       If it isn't flex, the bottom will not take into account the padding, only the text height and cause the indicator to float*/
-      display: flex !important;
-      align-items: center !important;
-      position: relative !important;
-      padding: var(--pku-tab-pad-y) var(--pku-tab-pad) !important;
-      margin: 0 !important;
-      border-radius: 0 !important;
-      color: ${C.text} !important;
-      text-decoration: none !important;
-      font-size: 18px !important;
-      line-height: 1.2 !important;
-      white-space: nowrap !important;
-      cursor: pointer !important;
-    }
-    /* Hover is a ::before inset inside the tab rather than a background on the
-       tab itself: hover box is decided by the text height, not the box height. */
-    .pku-nav-link:hover { color: ${C.text} !important; text-decoration: none !important; }
-    .pku-nav-link::before {
-      content: '' !important;
-      position: absolute !important;
-      /* Centred on the label and sized from the text, not the tab */
-      left: calc(var(--pku-tab-pad) - var(--pku-hover-pad-x)) !important;
-      right: calc(var(--pku-tab-pad) - var(--pku-hover-pad-x)) !important;
-      top: 50% !important;
-      height: calc(1.2em + var(--pku-hover-pad-y) * 2) !important;
-      transform: translateY(-50%) !important;
-      border-radius: 5px !important;
-      background: transparent !important;
-      pointer-events: none !important;
-    }
-    .pku-nav-link:hover::before { background: rgba(0,0,0,0.07) !important; }
-    /* Positioned child, so it paints above the hover pill that an absolutely
-       positioned ::before would otherwise cover. font-size is explicit
-       because the site sets a bare span { font-size: 12px } rule, which
-       targets this element directly and beats the size inherited from the
-       link. */
-    .pku-nav-label {
-      position: relative !important;
-      z-index: 1 !important;
-      font-size: inherit !important;
-      line-height: inherit !important;
-    }
-    /* sits ON the 1px separator: the tab's bottom edge is flush with the
-       border, so -1px lets the 3px bar cover the line itself */
-    .pku-nav-link.active::after {
-      content: '' !important;
-      position: absolute !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: -1px !important;
-      height: 3px !important;
-      background: ${C.accent} !important;
-      border-radius: 2px 2px 0 0 !important;
-    }
-
-    /* ---- NARROW (default): two rows, only the nav sticks ---- */
-    .pku-header { display: contents !important; }
-    .pku-nav {
-      position: sticky !important;
-      top: 0 !important;
-      z-index: 1000 !important;
-      border-bottom: 1px solid ${C.faintLine} !important;
-    }
-
-    /* ---- WIDE (>= 900px): logo + tabs on one row, whole header sticks ---- */
-    @media (min-width: 900px) {
-      .pku-header {
-        display: flex !important;
-        align-items: stretch !important;
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 10000 !important;
-        background: ${C.headerBg} !important;
-        border-bottom: 1px solid ${C.faintLine} !important;
-      }
-      .pku-titlebar { padding-right: var(--pku-nav-gap) !important; }
-      /* Only what actually differs when the nav shares a row with the title:
-         it stops sticking on its own, fills the leftover width, and gives up
-         its bottom border to the header. Tab geometry and the indicator are
-         inherited from the shared rules above. */
-      .pku-nav {
-        position: static !important;
-        flex: 1 !important;
-        padding: 0 calc(var(--pku-nav-gap) - var(--pku-tab-pad)) !important;
-        border-bottom: none !important;
-      }
-    }`;
-	var PageHero = css`
-    .pku-hero {
-      width: var(--pku-content-w) !important;
-      margin: 0 auto !important;
-      padding: 36px 0 0 !important;   /* ample space above the title */
-    }
-    .pku-hero-head { padding-bottom: 14px !important; }
-    .pku-hero-title {
-      margin: 0 !important;
-      font-size: 30px !important;
-      font-weight: 600 !important;
-      color: ${C.text} !important;
-    }
-    .pku-hero-meta {
-      display: block !important;      /* second line, under the title */
-      margin-top: 8px !important;
-      font-size: 13px !important;
-      color: ${C.text} !important;
-    }
-    /* the 选课时间为：… tail of the meta line reads blue and bold */
-    .pku-hero-meta .pku-hero-meta-time {
-      color: ${C.courseLink} !important;
-      font-weight: 700 !important;
-    }
-    .pku-hero-head + .pku-hero-rule {
-      height: 1px !important;
-      background: ${C.rule} !important;
-    }`;
-	var Noticies = css`
-    .pku-notice.pku-notice  {
-      /* same width as the hero rule above it, so their edges line up */
-      width: var(--pku-content-w) !important;
-      box-sizing: border-box !important;
-      margin: 16px auto 0 !important;
-      padding: var(--pku-notice-pad) !important;
-      border: 1px solid ${C.noticeBorder} !important;
-      border-radius: 10px !important;
-      background: ${C.headerBg} !important;
-      font-size: 13px !important;
-      line-height: 1.75 !important;
-    }
-    /* the site marks urgent copy red; here it reads as bold black */
-    .pku-notice, .pku-notice * {
-      color: ${C.text} !important;
-      background: transparent !important;
-      font-size: 13px !important;
-    }
-    .pku-notice strong { font-weight: 700 !important; }
-    /* an operation failure reads as a notice, but red: light-red fill, red edge */
-    .pku-notice.pku-notice--error {
-      border-color: ${C.errorBorder} !important;
-      background: ${C.warnClash} !important;
-    }
-    .pku-notice.pku-notice--error,
-    .pku-notice.pku-notice--error * {
-      color: ${C.warnClashText} !important;
-    }
-    /* an operation success reads the same way, but green: light-green fill,
-       green edge; the text stays black like any other notice */
-    .pku-notice.pku-notice--success {
-      border-color: ${C.successBorder} !important;
-      background: ${C.successFill} !important;
-    }
-    .pku-notice .pku-notice-course {
-      color: ${C.warnClashText} !important;
-      font-weight: 700 !important;
-    }`;
-	var SectionHeads = css`
-    /* ---- section heads (list titles above each datagrid) ----
-       The title strip and the toolbar are direct children of the grid's table
-       cell, so that cell is the title's sticky containing block and it stays
-       pinned for as long as its own table is on screen. Only the title sticks
-       (and the grid's header row); the search and filter row scrolls away. */
-    .pku-section-head { position: static !important; background: transparent !important; }
-    .pku-section-headline, .pku-section-headline * { color: ${C.text} !important; }
-    /* the sticky title strip: plain page background, pinned under the nav.
-       It must stay opaque so table rows do not show through as they pass.
-       Its stickiness ends where its wrapper does -- at the last data row, just
-       above the pager -- so it scrolls up there rather than riding over it. */
-    .pku-section-headline {
-      position: sticky !important;
-      top: var(--pku-stick-top, 0px) !important;
-      z-index: 1100 !important;  /* highest: above the nav, toolbar and table */
-      display: flex !important;
-      align-items: baseline !important;
-      flex-wrap: wrap !important;
-      gap: 10px !important;
-      /* top padding lives here now that the old wrapper is gone */
-      padding: 26px 0 12px !important;
-      background: #fff !important;
-      border-bottom: 1px solid ${C.rule} !important;
-    }
-    /* The toolbar is NOT sticky and keeps the page background so rows never show
-       through it. It sits BELOW the sticky title (900) so the title always wins;
-       an open facet dropdown gets its own higher layer further down, which is
-       what lets it overhang without lifting the whole toolbar. */
-    /* While a filter is open the toolbar is lifted above the title, so the
-       dropdown (trapped in the toolbar's stacking context) can overhang it.
-       Closed, the title wins -- which is what keeps the sticky title on top. */
-    .pku-toolbar {
-      position: relative !important;
-      z-index: 500 !important;
-      background: #fff !important;
-      padding: 16px var(--pku-toolbar-pad-x) 0 !important;
-    }
-    /* Must come AFTER .pku-toolbar: equal specificity and both !important, so
-       the later rule wins. Declared before it, this was silently overridden. */
-    .pku-toolbar.pku-toolbar--above { z-index: 995 !important; }
-    .pku-section-title {
-      margin: 0 !important;
-      font-size: 20px !important;
-      font-weight: 600 !important;
-      line-height: 1.3 !important;
-      color: ${C.text} !important;
-    }
-    .pku-section-note {
-      font-size: 13px !important;   /* explicit: beats the site's bare span rule */
-      font-weight: 400 !important;
-    }
-    /* the 导出到 excel link in the 选课结果 note: bright blue, underline on hover */
-    .pku-section-headline a.pku-timetable-export,
-    .pku-section-headline a.pku-timetable-export:link,
-    .pku-section-headline a.pku-timetable-export:visited,
-    .pku-section-headline a.pku-timetable-export:active {
-      color: ${C.courseLink} !important;
-      text-decoration: none !important;
-    }
-    .pku-section-headline a.pku-timetable-export:hover {
-      text-decoration: underline !important;
-    }
-    /* credit / willingness tally beside a list title: note-sized but bright blue */
-    .pku-section-headline .pku-credit-info {
-      font-size: 13px !important;
-      font-weight: 600 !important;
-      color: ${C.courseLink} !important;
-    }
-
-    /* standalone actions (no list title on the page): page-width, not sticky */
-    .pku-section-head--bare {
-      position: static !important;
-      width: var(--pku-content-w) !important;
-      margin: 0 auto 20px !important;
-      padding: 16px 0 20px !important;
-      /* a rule closes the pair off from the form beneath them */
-      border-bottom: 1px solid ${C.rule} !important;
-    }
-    .pku-section-head--bare .pku-actions-row { gap: 10px !important; }`;
-	var Toolbar = css`
-    /* ---- toolbar: search, plan buttons, filter UI ---- */
-    /* The toolbar is padded on both sides, so a plain child would be short by
-       that much; pull the rule back out to the full table width. */
-    .pku-toolbar-rule {
-      height: 1px !important;
-      background: ${C.rule} !important;
-      margin: 16px calc(-1 * var(--pku-toolbar-pad-x)) 0 !important;
-    }
-    .pku-search-row {
-      display: flex !important;
-      align-items: center !important;
-      flex-wrap: wrap !important;
-      gap: 12px !important;
-    }
-    .pku-search-label {
-      font-size: 13px !important;
-      color: ${C.text} !important;
-    }
-    /* holds the icon and the input; the input's left padding clears the icon */
-    .pku-search-box {
-      position: relative !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      flex: 1 1 240px !important;
-      max-width: 360px !important;
-    }
-    .pku-search-icon {
-      position: absolute !important;
-      left: 9px !important;
-      width: 12px !important;
-      height: 12px !important;
-      pointer-events: none !important;
-      color: ${C.noteText} !important;
-    }
-    .pku-search-input {
-      box-sizing: border-box !important;
-      width: 100% !important;
-      padding: 7px 10px 7px 27px !important;
-      font-size: 13px !important;
-      font-family: inherit !important;
-      color: ${C.text} !important;
-      background: #fff !important;
-      border: 1px solid ${C.fieldBorder} !important;
-      border-radius: 4px !important;
-      outline: none !important;
-    }
-    .pku-search-input::placeholder { color: ${C.noteText} !important; }
-    .pku-search-input:focus { border-color: ${C.btnBlue} !important; }
-    /* legend under the search: same text size/weight/colour as the search label */
-    .pku-search-legend {
-      font-size: 13px !important;
-      font-weight: 400 !important;
-      color: ${C.text} !important;
-      margin-top: 8px !important;
-    }
-
-    /* ---- button row: two blue actions, then the filter controls ---- */
-    .pku-actions-row {
-      display: flex !important;
-      align-items: center !important;
-      flex-wrap: wrap !important;
-      gap: 12px !important;
-      padding-top: var(--pku-search-gap) !important;
-    }
-    /* these are the site's own <a> elements, restyled as buttons */
-    .pku-btn,
-    .pku-btn:link,
-    .pku-btn:visited {
-      display: inline-block !important;
-      padding: 8px 14px !important;
-      font-size: 13px !important;
-      font-weight: 500 !important;
-      line-height: 1.2 !important;
-      color: #fff !important;
-      background: ${C.btnBlue} !important;
-      border-radius: 5px !important;
-      text-decoration: none !important;
-      cursor: pointer !important;
-    }
-    .pku-btn:hover {
-      background: ${C.btnBlueHover} !important;
-      color: #fff !important;
-      text-decoration: none !important;
-    }`;
-	var CourseQuery = css`
-    /* ---- course query page ---- */
-    /* 查询 is the page's primary action, so it takes the same blue as every
-       other one; 清空条件 sits beside it as the quiet alternative. */
-    #qyForm input#b_query {
-      padding: 8px 18px !important;
-      font-size: 13px !important;
-      font-weight: 500 !important;
-      line-height: 1.2 !important;
-      color: #fff !important;
-      background: ${C.btnBlue} !important;
-      border: none !important;
-      border-radius: 5px !important;
-      cursor: pointer !important;
-      /* the site bolts selectize's .selectize-input class onto these buttons,
-         whose theme gives them width:100% and, for inputs, a left text flow --
-         undo both so the label stays centred and the button sizes to it */
-      box-sizing: border-box !important;
-      width: auto !important;
-      text-align: center !important;
-    }
-    #qyForm input#b_query:hover { background: ${C.btnBlueHover} !important; }
-    #qyForm input#b_cancel {
-      padding: 8px 14px !important;
-      font-size: 13px !important;
-      line-height: 1.2 !important;
-      color: ${C.text} !important;
-      background: #fff !important;
-      border: 1px solid ${C.fieldBorder} !important;
-      border-radius: 5px !important;
-      cursor: pointer !important;
-      box-sizing: border-box !important;
-      width: auto !important;
-      text-align: center !important;
-    }
-    #qyForm input#b_cancel:hover { background: ${C.facetBg} !important; }
-
-    /* The filter dropdowns have to paint over the grid's sticky column header
-       (880) and the sticky page title (2000), both of which are their own
-       layers and would otherwise cut across an open list. */
-    .selectize-dropdown { z-index: 2100 !important; }
-    /* .selectize-control deliberately gets NO z-index: it is position:relative,
-       so giving it one would open a stacking context and trap the dropdown
-       inside it, capped below the very layers it needs to clear. */
-    /* The filter row is left exactly as the site built it -- no wrapper, no
-       field treatment, no cell padding of ours. The selectize dropdowns in
-       particular are only ever layered, never restyled: their markup is the
-       library's and does not survive being leaned on. The two buttons below
-       are the sole exception. */
-
-    /* ---- course query form ----
-       Only the course type selector is rebuilt here: its radios move into one segmented
-       selector and the table they sat in is hidden. I did not change the filters as that would require too much work */
-    .pku-qform {
-      width: var(--pku-content-w) !important;
-      margin: 0 auto 4px !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 12px !important;
-    }
-    /* the selectize demo script bolts a theme switcher and value read-outs
-       onto the page; none of it belongs to the site */
-    .theme-selector, .pku-qform + .value, #qyForm pre.js { display: none !important; }
-
-    /* B2: one segmented selector across the full width */
-    .pku-qtypes {
-      display: flex !important;
-      width: 100% !important;
-      border: 1px solid ${C.fieldBorder} !important;
-      border-radius: 6px !important;
-      overflow: hidden !important;
-      background: #fff !important;
-    }
-    .pku-qtype {
-      flex: 1 1 0 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 10px 8px !important;
-      font-size: 13px !important;
-      line-height: 1.2 !important;
-      text-align: center !important;
-      color: ${C.text} !important;
-      background: #fff !important;
-      cursor: pointer !important;
-      border-left: 1px solid ${C.fieldBorder} !important;
-      transition: background .14s ease, color .14s ease !important;
-    }
-    .pku-qtype:first-child { border-left: none !important; }
-    .pku-qtype input { position: absolute !important; opacity: 0 !important;
-                       width: 0 !important; height: 0 !important; }
-    /* the page colours two of these labels itself; the selector is one control,
-       so every segment reads the same */
-    .pku-qtype span { color: inherit !important; }
-    .pku-qtype:hover {
-      background: ${C.headerBg} !important;
-      color: ${C.btnBlue} !important;
-    }
-    .pku-qtype--on,
-    .pku-qtype--on:hover {
-      background: ${C.btnBlue} !important;
-      color: #fff !important;
-    }`;
-	var FilterToggle = css`
-    /* ---- 筛选条件 toggle: plain text + chevron, no box ---- */
-    .pku-filter-toggle {
-      display: inline-flex !important;
-      align-items: center !important;
-      gap: 6px !important;
-      line-height: 1 !important;
-      padding: 0 !important;
-      margin-left: 4px !important;
-      font-size: 13px !important;
-      color: ${C.text} !important;
-      background: none !important;
-      border: none !important;
-      cursor: pointer !important;
-      font-family: inherit !important;
-    }`;
-	var Cache = css`
-    /* ---- cache progress: one segment per page, blue when loaded ---- */
-    .pku-cache {
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      padding: 8px 0 0 !important;
-      font-size: 12px !important;
-      color: ${C.noteText} !important;
-    }
-    /* the bar stays for the whole session; only the status text changes */
-    .pku-cache-status {
-      font-size: 12px !important;
-      white-space: nowrap !important;
-    }
-    .pku-cache--done .pku-cache-status { color: ${C.text} !important; }
-    .pku-cache-track {
-      display: flex !important;
-      gap: 3px !important;
-      flex: 1 1 200px !important;
-      max-width: 360px !important;
-    }
-    .pku-cache-seg {
-      height: 5px !important;
-      flex: 1 1 0 !important;
-      border-radius: 3px !important;
-      background: ${C.optDot} !important;      /* pending: gray */
-      transition: background .25s ease !important;
-    }
-    .pku-cache-seg--on { background: ${C.btnBlue} !important; }   /* done: blue */
-    .pku-cache-seg--err { background: ${C.accent} !important; }
-    .pku-goto-page, .pku-goto-page:link, .pku-goto-page:visited {
-      color: ${C.link} !important;
-      font-size: 12px !important;
-      text-decoration: none !important;
-    }
-    .pku-goto-page:hover { text-decoration: underline !important; }
-    .pku-goto-hint {
-      color: ${C.noteText} !important;
-      font-size: 12px !important;
-      overflow-wrap: anywhere !important;
-      white-space: normal !important;
-    }
-    .pku-climit { font-size: 13px !important; color: ${C.text} !important; white-space: nowrap !important; }
-    .pku-climit-input {
-      width: 4.5em !important;
-      box-sizing: border-box !important;
-      padding: 7px 8px !important;
-      font-size: 13px !important;
-      font-family: inherit !important;
-      color: ${C.text} !important;
-      background: #fff !important;
-      border: 1px solid ${C.fieldBorder} !important;
-      border-radius: 4px !important;
-      outline: none !important;
-    }
-    .pku-climit-input:focus { border-color: ${C.btnBlue} !important; }
-    .pku-climit-tally { font-size: 13px !important; color: ${C.noteText} !important; }
-    .pku-climit-tally--over { color: ${C.warnClashText} !important; font-weight: 600 !important; }
-    .pku-result-count {
-      font-size: 13px !important;
-      color: ${C.noteText} !important;
-    }
-    .pku-reset {
-      font-size: 13px !important;
-      color: ${C.text} !important;
-      background: none !important;
-      border: none !important;
-      padding: 0 !important;
-      cursor: pointer !important;
-      font-family: inherit !important;
-      text-decoration: none !important;
-    }
-    .pku-reset:hover { text-decoration: underline !important; }`;
-	var Chevron = css`
-    /* Chevron: sized in em so it tracks the text, and spun about a point near
-       its tip (where a V's mass sits) rather than the box centre. */
-    .pku-chev {
-      width: 0.46em !important;
-      height: 0.46em !important;
-      flex: none !important;
-      display: inline-block !important;
-      vertical-align: middle !important;
-      border-right: 1.5px solid currentColor !important;
-      border-bottom: 1.5px solid currentColor !important;
-      transform-origin: 72% 72% !important;
-      transform: rotate(45deg) !important;      /* points down */
-      transition: transform .16s ease !important;
-    }
-    .pku-chev--open { transform: rotate(-45deg) !important; }  /* points right */
-    /* the toggle's chevron reads a touch low next to the text, so lift it */
-    /* The chevron is a rotated square, so its visual centre sits below its box
-       centre; lift it so it reads level with the text. */
-    .pku-filter-toggle .pku-chev { margin-top: -4px !important; }`;
-	var FilterPanel = css`
-    /* ---- filter panel ----
-       In flow on its own line beneath the buttons, so opening it pushes the
-       table down (animated). The three facets each take just under a third of
-       the width; their own dropdowns are absolute, so those overlay the form
-       instead of growing it. */
-    .pku-filters {
-      display: grid !important;
-      /* as many ~quarter-width facets as fit, wrapping on narrow screens */
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
-      gap: 10px !important;
-      overflow: hidden !important;
-      max-height: 0 !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      transition: max-height .22s ease, opacity .18s ease,
-                  padding-top .22s ease, visibility .22s ease !important;
-    }
-    .pku-filters--open {
-      max-height: 140px !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      padding-top: 12px !important;
-    }
-    /* overflow:hidden is what clips the panel while it animates, but it also
-       clips each facet's absolutely positioned dropdown. Once the opening
-       transition has finished, let content escape so the dropdowns can show. */
-    .pku-filters--done { overflow: visible !important; max-height: none !important; }
-
-    /* ---- one facet block (课程类别 / 学分 / 开课学院) ---- */
-    .pku-facet {
-      position: relative !important;   /* anchors its dropdown */
-      align-self: start !important;
-      border: 1px solid ${C.fieldBorder} !important;
-      border-radius: 6px !important;
-      background: #fff !important;
-      transition: background .18s ease !important;
-    }
-    /* squared bottom corners while open, so the block and its dropdown read as
-       one shape */
-    /* Square while open. The radius returns as soon as closing STARTS, so it
-       is not delayed until the collapse animation ends: the class is dropped on
-       click and only the list keeps animating. */
-    .pku-facet--open {
-      background: ${C.facetBg} !important;
-      border-bottom-left-radius: 0 !important;
-      border-bottom-right-radius: 0 !important;
-    }
-    /* While closing, the list collapses quickly and carries the rounded corners
-       itself, so the block never reads as square once the click has happened. */
-    .pku-facet--closing .pku-facet-list {
-      transition: max-height .1s ease, visibility .1s ease !important;
-      border-bottom-left-radius: 6px !important;
-      border-bottom-right-radius: 6px !important;
-    }
-    .pku-facet-btn {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      gap: 8px !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-      padding: 8px 10px !important;
-      font-size: 13px !important;
-      font-family: inherit !important;
-      color: ${C.text} !important;
-      background: none !important;
-      border: none !important;
-      cursor: pointer !important;
-      text-align: left !important;
-    }
-    /* The list is always in the DOM at full height and the block clips it, so
-       growing max-height sweeps the clip edge down and each option is revealed
-       only once the block has expanded past it. Absolute, so it covers the
-       form rather than resizing the filter row. */
-    .pku-facet-list {
-      position: absolute !important;
-      top: 100% !important;
-      left: -1px !important;
-      right: -1px !important;
-      z-index: 960 !important;
-      overflow: hidden !important;
-      max-height: 0 !important;
-      visibility: hidden !important;
-      background: ${C.facetBg} !important;
-      border: 1px solid ${C.fieldBorder} !important;
-      border-top: none !important;
-      border-radius: 0 0 6px 6px !important;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
-      transition: max-height .24s ease, visibility .24s ease !important;
-    }
-    .pku-facet--open .pku-facet-list {
-      max-height: 240px !important;
-      visibility: visible !important;
-    }
-    .pku-facet-opts {
-      list-style: none !important;
-      margin: 0 !important;
-      padding: 0 10px 8px 22px !important;   /* options indent from the label */
-      max-height: 252px !important;
-      overflow-y: auto !important;
-    }
-    .pku-opt {
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-      padding: 9px 0 3px !important;   /* more room above each option */
-      font-size: 13px !important;
-      color: ${C.text} !important;
-      cursor: pointer !important;
-    }
-    .pku-opt input { position: absolute !important; opacity: 0 !important;
-                     width: 0 !important; height: 0 !important; }
-    .pku-dot {
-      width: 13px !important;
-      height: 13px !important;
-      flex: none !important;
-      border: 1.5px solid ${C.optDot} !important;
-      border-radius: 50% !important;
-      background: #fff !important;
-      transition: background .15s ease, border-color .15s ease !important;
-    }
-    .pku-opt input:checked + .pku-dot {
-      background: ${C.btnBlue} !important;
-      border-color: ${C.btnBlue} !important;
-      box-shadow: inset 0 0 0 2.5px #fff !important;
-    }
-    .pku-opt input:focus-visible + .pku-dot {
-      outline: 2px solid ${C.btnBlue} !important;
-      outline-offset: 1px !important;
-    }
-    .pku-opt-text { font-size: 13px !important; }`;
-	var Footer = css`
-    /* ---- footer: replaces the site's dark red copyright strip ---- */
-    .pku-footer {
-      width: 100% !important;
-      box-sizing: border-box !important;
-      margin: 24px 0 0 !important;
-      padding: 9px var(--pku-gutter) !important;
-      background: ${C.headerBg} !important;
-      color: ${C.text} !important;
-      font-size: 13px !important;
-      text-align: center !important;
-    }
-    .pku-footer a, .pku-footer a:link, .pku-footer a:visited {
-      color: ${C.link} !important;
-      background: transparent !important;
-      text-decoration: none !important;
-    }
-    .pku-footer a:hover { text-decoration: underline !important; }`;
-	var Pager = css`
-    /* ---- pager ---- */
-    /* The pager is a block below the table, not a row inside it, so the table
-       (and the section wrapper around it) ends at the last data row. Its layer
-       still sits above the sticky column header (880) and is opaque, so the
-       header slides under it and out of sight exactly as the table runs out. */
-    .pku-pager-cell {
-      position: relative !important;
-      z-index: 900 !important;   /* over the header row's 880 */
-      box-sizing: border-box !important;
-      padding: 12px 10px !important;
-      border-top: 1px solid ${C.gridLine} !important;
-      background: #fff !important;
-    }
-    .pku-pager {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      flex-wrap: wrap !important;
-      gap: 10px !important;
-    }
-    .pku-pg-info { font-size: 13px !important; color: ${C.text} !important; }
-    /* the two ends are bare blue chevrons; prev/next are filled blue buttons */
-    .pku-pg,
-    .pku-pg:link,
-    .pku-pg:visited {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 1px !important;
-      text-decoration: none !important;
-      cursor: pointer !important;
-      color: ${C.btnBlue} !important;
-      background: transparent !important;
-    }
-    /* Every control is a bare blue chevron -- no boxes, enabled or not. One rule
-       set covering <a> and <span> in all link states, since the site's A:link
-       rule would otherwise repaint the enabled ones. */
-    a.pku-pg, a.pku-pg:link, a.pku-pg:visited, a.pku-pg:active, a.pku-pg:hover,
-    span.pku-pg {
-      padding: 5px 7px !important;
-      border-radius: 0 !important;
-      background: transparent !important;
-      color: ${C.btnBlue} !important;
-      text-decoration: none !important;
-    }
-    a.pku-pg:hover { color: ${C.btnBlueHover} !important; }
-    /* unavailable ends stay in place, greyed and inert */
-    .pku-pg--off {
-      opacity: .35 !important;
-      cursor: default !important;
-      pointer-events: none !important;
-    }
-    /* chevrons are rotated squares, inheriting the link's colour */
-    .pku-pg-chev {
-      width: .42em !important;
-      height: .42em !important;
-      display: inline-block !important;
-      border-top: 1.7px solid currentColor !important;
-      border-right: 1.7px solid currentColor !important;
-    }
-    .pku-pg-chev--right { transform: rotate(45deg) !important; }
-    .pku-pg-chev--left { transform: rotate(-135deg) !important; }
-    .pku-pg--edge .pku-pg-chev + .pku-pg-chev { margin-left: -3px !important; }
-    .pku-pg-jump { font-size: 13px !important; color: ${C.text} !important; }
-    .pku-pg-jump select {
-      font-size: 13px !important;
-      font-family: inherit !important;
-      padding: 4px 6px !important;
-      border: 1px solid ${C.fieldBorder} !important;
-      border-radius: 4px !important;
-      background: #fff !important;
-    }`;
-	var Grid = css`
-    /* ---- grid: modern flat table ----
-       The site's own datagrid classes are stripped from rows (and ele.js's
-       yellow hover handlers neutralised) in JS, so all colour lives here. */
-    table.datagrid {
-      border-collapse: collapse !important;
-      border: none !important;
-      width: 100% !important;
-      table-layout: fixed !important;   /* honours the per-column widths */
-      font-size: 13px !important;
-    }
-    /* the site styles the header/footer ROW itself (border:1px #999, blue bg);
-       reset the row as well as its cells or a stray box outlines the header */
-    table.datagrid tr,
-    table.datagrid tr.datagrid-header,
-    table.datagrid tr.datagrid-footer {
-      border: none !important;
-      background: transparent !important;
-    }
-    /* no vertical rules anywhere; the one after 课程名 is added back below */
-    table.datagrid td, table.datagrid th {
-      border-left: none !important;
-      border-right: none !important;
-      border-bottom: none !important;
-      border-top: 1px solid ${C.gridLine} !important;
-      padding: 8px 10px !important;
-      vertical-align: top !important;
-      overflow-wrap: anywhere !important;
-    }
-    /* Column headers stick just below the title strip. position:sticky does not
-       apply to a <tr>, so each cell sticks individually; they share one offset
-       so the row stays visually intact. Every cell in the row is tinted --
-       including the fold gutter -- or the blue would stop short of the left
-       edge while the row's hairlines run the full width. */
-    table.datagrid tr.pku-head-row > th,
-    table.datagrid tr.pku-head-row > td {
-      position: sticky !important;
-      top: var(--pku-head-top, 0px) !important;
-      z-index: 880 !important;   /* under the title strip, over the rows */
-      border-top: none !important;
-      background: ${C.headBg} !important;
-      color: ${C.text} !important;
-      font-size: 13px !important;
-      font-weight: 600 !important;
-      text-align: center !important;
-      vertical-align: middle !important;
-    }
-    /* a datagrid with no section title has no title strip to sit under, so its
-       column headers pin at the nav's bottom edge instead of leaving a gap */
-    table.datagrid.pku-no-title tr.pku-head-row > th,
-    table.datagrid.pku-no-title tr.pku-head-row > td {
-      top: var(--pku-stick-top, 0px) !important;
-    }
-    /* headers wrap onto further lines rather than being clipped */
-    table.datagrid th .pku-head {
-      display: block !important;
-      white-space: normal !important;
-      overflow-wrap: anywhere !important;
-    }
-    /* ---- the horizontally scrolling detail pane ----
-       One pane per row, all sharing the same fixed inner column widths and
-       kept in scroll sync, so the columns line up down the table. */
-    /* rules on both edges of the scrolling pane, marking where the fixed
-       columns end and resume */
-    table.datagrid .pku-scrollcell {
-      padding: 0 !important;
-      overflow: hidden !important;
-      border-left: 1px solid ${C.edgeLine} !important;
-      border-right: 1px solid ${C.edgeLine} !important;
-    }
-    /* Panes stay IN FLOW. An absolutely positioned pane collapses its cell to
-       zero height, which loses the scrollbar entirely.
-       The data rows hide their bars; the header keeps its own, left as the
-       platform's overlay scrollbar -- floating, so it costs no layout height
-       and cannot push the labels off centre. Do NOT give it an explicit
-       ::-webkit-scrollbar height: that forces a classic space-taking bar back. */
-    .pku-hscroll {
-      overflow-x: auto !important;
-      overflow-y: hidden !important;
-    }
-    table.datagrid tr:not(.pku-head-row) .pku-hscroll {
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-    }
-    table.datagrid tr:not(.pku-head-row) .pku-hscroll::-webkit-scrollbar {
-      display: none !important;
-      height: 0 !important;
-    }
-    table.pku-inner {
-      border-collapse: collapse !important;
-      table-layout: fixed !important;
-      width: max-content !important;
-      background: transparent !important;
-    }
-    table.pku-inner td, table.pku-inner th {
-      border: none !important;
-      background: transparent !important;
-      padding: 8px 10px !important;
-      vertical-align: top !important;
-      overflow-wrap: anywhere !important;
-    }
-    /* The scrolling columns hold unbounded text, so they are pinned to exactly
-       two lines: short values are padded out to two, long ones clipped at two.
-       上课/考试信息 is the exception -- it holds every meeting on its own line,
-       so it keeps its natural (block) height instead of the two-line clamp. Its
-       height must stay overridable so the fold animation can collapse it. */
-    table.pku-inner td:not(.pku-info-cell) .pku-cell {
-      display: -webkit-box !important;
-      -webkit-line-clamp: 2 !important;
-      -webkit-box-orient: vertical !important;
-      overflow: hidden !important;
-      height: 3em !important;          /* 2 rows at line-height 1.5 */
-      min-height: 3em !important;
-      line-height: 1.5 !important;
-    }
-    /* the pane's header labels sit middle-aligned like the fixed header cells,
-       or the scrolling titles ride high against their neighbours */
-    table.datagrid tr.pku-head-row .pku-scrollcell,
-    table.datagrid tr.pku-head-row table.pku-inner th,
-    table.datagrid tr.pku-head-row table.pku-inner td {
-      vertical-align: middle !important;
-    }
-    /* the header pane fills its cell so its centred labels line up with the
-       fixed header cells beside it */
-    table.datagrid tr.pku-head-row .pku-hscroll { height: 100% !important; }
-    /* a slimmer bar than the platform default */
-    table.datagrid tr.pku-head-row .pku-hscroll { scrollbar-width: thin !important; }
-    table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar {
-      height: 5px !important;
-    }
-    table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-thumb {
-      background: ${C.edgeLine} !important;
-      border-radius: 3px !important;
-    }
-    table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-track {
-      background: transparent !important;
-    }
-    /* header cells carry no two-row floor: that is for data cells only */
-    table.datagrid tr.pku-head-row .pku-cell { min-height: 0 !important; }
-    table.datagrid .pku-col-name {
-      border-right: 1px solid ${C.gridLine} !important;
-    }
-
-    /* each cell is at least two text rows tall and grows as needed */
-    /* every data cell is at least two text rows tall, and grows beyond that */
-    table.datagrid td .pku-cell {
-      display: block !important;
-      line-height: 1.5 !important;
-      min-height: 3em !important;   /* 2 rows at line-height 1.5 */
-    }
-
-    /* course names read as links: blue, underlined only on hover */
-    /* Bright blue, underlined only on hover, colour never changing. These must
-       match the <a> itself: style.css sets A:link/:visited/:active to #7777AA
-       with an underline, so styling the wrapper span loses to it. */
-    table.datagrid a,
-    table.datagrid a:link,
-    table.datagrid a:visited,
-    table.datagrid a:active,
-    table.datagrid a:hover {
-      color: ${C.courseLink} !important;
-      background: transparent !important;
-      text-decoration: none !important;
-      cursor: pointer !important;
-    }
-    table.datagrid a:hover { text-decoration: underline !important; }
-    table.datagrid a span, table.datagrid a font {
-      color: inherit !important;
-      text-decoration: inherit !important;
-    }
-
-    /* zebra, fixed at load while everything is unfolded */
-    tr.pku-r-even > td { background: ${C.zebraEven} !important; }
-    tr.pku-r-odd  > td { background: ${C.zebraOdd} !important; }
-    /* a collapsed leader reads blue; hover is lighter than that */
-    tr.pku-f-name > td { background: ${C.rowFolded} !important; }
-    table.datagrid tr.pku-row:hover > td { background: ${C.rowHover} !important; }`;
-	var Warnings = css`
-    /* ---- warnings ----
-       Declared AFTER the zebra, fold and hover rules so they win on equal
-       specificity. Nothing here blocks a selection: the server enforces the
-       real rules, these are only a heads-up. A time clash outranks a credit
-       overrun when a row is both. */
-    table.datagrid tr.pku-over-credit > td {
-      background: ${C.warnCredit} !important;
-    }
-    table.datagrid tr.pku-clash > td {
-      background: ${C.warnClash} !important;
-      color: ${C.warnClashText} !important;
-    }
-    /* a folded leader keeps its blue even when it is also flagged clash/credit;
-       the extra class wins over the single warning class on specificity */
-    table.datagrid tr.pku-f-name.pku-clash > td,
-    table.datagrid tr.pku-f-name.pku-over-credit > td {
-      background: ${C.rowFolded} !important;
-      color: ${C.text} !important;
-    }
-
-    table.datagrid tr.pku-clash a,
-    table.datagrid tr.pku-over-credit a {
-      color: ${C.courseLink} !important;
-    }
-    table.datagrid tr.pku-clash:hover > td,
-    table.datagrid tr.pku-over-credit:hover > td {
-      filter: brightness(0.97) !important;
-    }
-
-    /* rule between one course name and the next; only when this grid asked for
-       thick separators (the 已选列表 grid uses plain row hairlines instead) */
-    tr.pku-group-start > td, tr.pku-group-start > th {
-      border-top: 1px solid ${C.groupLine} !important;
-    }`;
-	var Fold = css`
-    /* ---- fold animation ----
-       The row's box animates; the text inside it does not.
-
-       Every cell already keeps its content in one wrapper -- .pku-cell for an
-       ordinary column, .pku-hscroll for the horizontal pane. armFold pins that
-       wrapper to the height it has right now, and the fold moves only the box
-       around the text: the wrapper's height, and the cell's own vertical
-       padding. Neither changes the wrapper's WIDTH, so the text is laid out
-       exactly once and is only ever clipped -- never re-wrapped, never
-       re-metricked -- while the table below rides the collapse frame by frame
-       instead of jumping when it ends.
-
-       The padding has to stay on the CELL rather than move into the wrapper: a
-       wrapper carrying its own padding cannot be sized below it, so the rows
-       would stall a padding's worth short of closed and snap the rest away.
-       Cell padding and wrapper height are both linear in the same easing, so
-       the row's height is their sum and tracks the fold exactly.
-
-       Nothing inside the pane is touched either: .pku-hscroll clips the whole
-       nested table in one go, so its cells keep their two-line clamp and their
-       horizontal scroll position. */
-    table.datagrid tr.pku-fold > td {
-      overflow: hidden !important;
-      border-top-width: 0 !important;   /* folded into the wrapper's height */
-    }
-    table.datagrid tr.pku-fold > td > .pku-cell {
-      display: block !important;
-      overflow: hidden !important;
-      min-height: 0 !important;         /* the 3em floor would stop the collapse */
-    }
-    /* the closed end of the fold; the wrapper heights are driven inline */
-    table.datagrid tr.pku-fold--shut > td {
-      padding-top: 0 !important;
-      padding-bottom: 0 !important;
-    }
-    /* armed only for the animation itself, so pinning the row is instant */
-    table.datagrid tr.pku-fold--anim > td {
-      transition: padding-top .24s ease, padding-bottom .24s ease !important;
-    }
-    table.datagrid tr.pku-fold--anim > td > .pku-cell,
-    table.datagrid tr.pku-fold--anim > td > .pku-hscroll {
-      transition: height .24s ease !important;
-    }
-    tr.pku-hidden { display: none !important; }
-    /* the filter hides rows independently of folding, so the two never fight */
-    tr.pku-filtered-out { display: none !important; }
-
-    /* ele.js swaps a hovered row's class to datagrid-all (yellow-green). Its
-       handlers are cleared in JS, but it runs after this script, so the class
-       is neutralised here too: our own hover colour wins either way. */
-    table.datagrid tr.datagrid-all > td { background: ${C.rowHover} !important; }
-    table.datagrid tr.datagrid-all.pku-f-name > td {
-      background: ${C.rowFolded} !important;
-    }
-
-    .pku-folded-mark {
-      font-size: 12px !important;
-      color: ${C.noteText} !important;
-    }
-
-    /* fold toggle sits in a narrow leading column, outside the data cells */
-    table.datagrid .pku-foldcell--empty {
-      width: 4px !important;
-      padding: 0 !important;
-    }
-    table.datagrid td.pku-foldcell,
-    table.datagrid th.pku-foldcell {
-      width: 26px !important;
-      padding: 8px 0 8px 4px !important;
-      text-align: center !important;
-      vertical-align: middle !important;
-    }
-    .pku-fold-btn {
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      width: 1.5em !important;
-      height: 1.5em !important;
-      padding: 0 !important;
-      background: none !important;
-      border: none !important;
-      cursor: pointer !important;
-      color: ${C.text} !important;
-      font-size: 13px !important;
-    }
-
-    /* the site's own 课程表 (the inline one kept on 选课结果) pads every cell 5px
-       left via its .course class; trim it to near nothing like the floating one */
-    #classAssignment .course { padding-left: 2px !important; }`;
-	var Timetable = css`
-    /* ---- floating timetable ----
-       The site's 学期课程表 rebuilt as a floating window: a light-blue sliver of
-       weekday headings across the top, bare period numerals down the side, and
-       one cell per period holding just the course name (tagged with its week
-       pattern) and its exam line. Cells keep the site's own colours, which are
-       the only thing telling one course from another. */
-    .pku-tt {
-      position: fixed !important;
-      z-index: 3000 !important;
-      display: flex !important;
-      align-items: stretch !important;
-      /* One shadow, cast by the window as a whole. Given to the table and the
-         bar separately, each fell across the other: the table shaded the bar
-         beside it however they were stacked. The border-radius matches the
-         rounded outer corners of the body and bar, so the shadow's own square
-         corners don't peek out past them. */
-      border-radius: 6px !important;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.18) !important;
-      cursor: grab !important;
-      font-size: 12px !important;
-      line-height: 1.25 !important;
-      color: ${C.text} !important;
-      --pku-tt-head-h: 20px !important;
-    }
-    /* The clip box. Folding animates its WIDTH while the grid inside keeps the
-       width it was laid out at, so the table is hidden and revealed by its own
-       edge travelling across it -- never re-wrapped, never squeezed. Same trick
-       the row fold uses. */
-    .pku-tt-body {
-      /* Above the bar, which is a later sibling and so would otherwise paint
-         its shadow across the table. Lifted, the bar's shadow lands only on
-         the page behind it. */
-      position: relative !important;
-      z-index: 1 !important;
-      overflow: hidden !important;
-      box-sizing: border-box !important;
-      background: #fff !important;
-      border: 1px solid ${C.edgeLine} !important;
-      border-right: none !important;
-      border-radius: 6px 0 0 6px !important;
-    }
-    .pku-tt--anim .pku-tt-body {
-      transition: width .24s ease, border-left-width .24s ease !important;
-    }
-    .pku-tt--shut .pku-tt-body { border-left-width: 0 !important; }
-
-    .pku-tt-grid {
-      display: grid !important;
-      touch-action: none !important;
-      height: 100% !important;
-      box-sizing: border-box !important;
-      background: ${C.gridLine} !important;   /* shows through as the hairlines */
-      gap: 1px !important;
-    }
-    .pku-tt-cell, .pku-tt-head, .pku-tt-side {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      overflow: hidden !important;
-      padding: 0 !important;
-      background: #fff !important;
-      box-sizing: border-box !important;
-    }
-    /* only the top sliver is blue; the period column stays plain */
-    .pku-tt-head {
-      background: ${C.headerBg} !important;
-      font-weight: 600 !important;
-      white-space: nowrap !important;
-    }
-    .pku-tt-side {
-      font-weight: 600 !important;
-      color: ${C.noteText} !important;
-      white-space: nowrap !important;
-    }
-    /* Text is laid out once at the grid's font size and only ever scaled DOWN
-       to fit its cell, so a cramped cell loses size rather than re-wrapping.
-       width:max-content keeps the box hugging its text, so the scale-down is
-       centred on the text and does not leave a full-width sliver of dead space
-       either side. */
-    .pku-tt-fit {
-      width: max-content !important;
-      flex: none !important;          /* don't let flexbox squeeze it back down */
-      padding: 2px 2px !important;
-      box-sizing: border-box !important;
-      text-align: center !important;
-      overflow-wrap: anywhere !important;
-      transform-origin: center center !important;
-    }
-    .pku-tt-exam { opacity: .75 !important; }
-    /* two courses clashing in one period, ruled off from each other; the rule
-       is inset so it reads as a divider inside the cell, not a grid line */
-    .pku-tt-sep {
-      width: 55% !important;
-      margin: 1px auto !important;
-      border-top: 1px solid currentColor !important;
-      opacity: .45 !important;
-    }
-
-    /* the drag bar down the right edge, with the fold chevron at its top */
-    .pku-tt-bar {
-      flex: none !important;
-      width: 30px !important;   /* wide enough to grab without aiming */
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      padding-top: 5px !important;
-      box-sizing: border-box !important;
-      background: ${C.headerBg} !important;
-      border: 1px solid ${C.edgeLine} !important;
-      border-radius: 0 6px 6px 0 !important;
-      touch-action: none !important;
-    }
-    .pku-tt--dragging, .pku-tt--dragging .pku-tt-bar { cursor: grabbing !important; }
-    /* the grip has its own job, and the chevron is a button */
-    .pku-tt-grip, .pku-tt-chev { cursor: default !important; }
-    .pku-tt-chev { cursor: pointer !important; }
-    .pku-tt-grip { cursor: nesw-resize !important; }
-    .pku-tt-chev {
-      flex: none !important;
-      width: 28px !important;   /* large, forgiving click target */
-      height: 28px !important;
-      padding: 0 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      background: none !important;
-      border: none !important;
-      cursor: pointer !important;
-      color: ${C.text} !important;
-    }
-    /* points at the edge the table will travel to: right to shut it into the
-       bar, left to pull it back out. The pivot sits inside the V, half way
-       between the box centre and the tip, so the two states hinge about the
-       same point without swinging the glyph out to the edge. */
-    .pku-tt-chev .pku-chev {
-      transform: rotate(-45deg) !important;
-      transform-origin: 65% 65% !important;
-      transition: transform .24s ease !important;
-    }
-    .pku-tt--shut .pku-tt-chev .pku-chev { transform: rotate(135deg) !important; }
-
-    /* Resize grip: a bare L outside the bottom-left corner, thickening under
-       the pointer. Dragging it moves that corner while the top-right one --
-       the bar's own corner -- stays put. */
-    .pku-tt-grip {
-      position: absolute !important;
-      left: -11px !important;
-      bottom: -11px !important;
-      width: 17px !important;
-      height: 17px !important;
-      cursor: nesw-resize !important;
-      touch-action: none !important;
-    }
-    .pku-tt--shut .pku-tt-grip { display: none !important; }
-    .pku-tt-grip::before {
-      content: '' !important;
-      position: absolute !important;
-      inset: 0 !important;
-      border-left: 2px solid ${C.text} !important;
-      border-bottom: 2px solid ${C.text} !important;
-      border-bottom-left-radius: 5px !important;
-      /* drop-shadow traces the L itself; box-shadow would outline the box */
-      filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.45)) !important;
-      transition: border-width .12s ease !important;
-    }
-    .pku-tt-grip:hover::before,
-    .pku-tt--sizing .pku-tt-grip::before {
-      border-left-width: 4px !important;
-      border-bottom-width: 4px !important;
-    }
-
-    /* A 预选 has changed the taken list, so the timetable's clash/credit marks
-       are stale until 选课结果 re-reads it. Blur the grid and lay the notice
-       over it. The overlay is pointer-transparent so drag/fold/resize keep
-       working through it. */
-    .pku-tt--stale .pku-tt-grid {
-      filter: blur(8px) !important;
-    }
-    .pku-tt-stale {
-      position: absolute !important;
-      inset: 0 !important;
-      z-index: 2 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-      gap: 8px !important;
-      box-sizing: border-box !important;
-      padding: 20px !important;
-      text-align: center !important;
-      pointer-events: none !important;
-    }
-    .pku-tt-stale-main {
-      font-size: 14px !important;
-      font-weight: 600 !important;
-      line-height: 1.5 !important;
-      color: ${C.text} !important;
-    }
-    .pku-tt-stale-sub {
-      font-size: 11px !important;
-      line-height: 1.5 !important;
-      color: ${C.noteText} !important;
-    }
-  `;
-	var CREDIT_INFO = null;
+	var Root = css`table:has(#menu){display:none!important}body{background:#fff!important;margin:0!important}:root{--pku-gutter:24px;--pku-tab-pad:14px;--pku-nav-gap:12px;--pku-content-w:95%;--pku-notice-pad:16px 20px;--pku-title-pad-y:14px;--pku-tab-pad-y:9px;--pku-hover-pad-y:8px;--pku-hover-pad-x:12px;--pku-toolbar-pad-x:14px;--pku-section-rule-gap:16px;--pku-search-gap:50px}`;
+	var Title = css`.pku-titlebar{padding:var(--pku-title-pad-y) var(--pku-gutter)!important;background:${C.headerBg}!important;color:${C.text}!important;align-items:center!important;gap:14px!important;display:flex!important}.pku-logo{filter:brightness(0)!important;width:auto!important;height:42px!important}.pku-title{letter-spacing:1px!important;color:${C.text}!important;margin:0!important;font-size:26px!important;font-weight:600!important}`;
+	var NavMenu = css`.pku-nav{padding:0 calc(var(--pku-gutter) - var(--pku-tab-pad))!important;background:${C.headerBg}!important;align-items:stretch!important;gap:2px!important;display:flex!important}.pku-nav-link,.pku-nav-link:link,.pku-nav-link:visited,.pku-nav-link:active{padding:var(--pku-tab-pad-y) var(--pku-tab-pad)!important;color:${C.text}!important;white-space:nowrap!important;cursor:pointer!important;border-radius:0!important;align-items:center!important;margin:0!important;font-size:18px!important;line-height:1.2!important;text-decoration:none!important;display:flex!important;position:relative!important}.pku-nav-link:hover{color:${C.text}!important;text-decoration:none!important}.pku-nav-link:before{content:""!important;left:calc(var(--pku-tab-pad) - var(--pku-hover-pad-x))!important;right:calc(var(--pku-tab-pad) - var(--pku-hover-pad-x))!important;height:calc(1.2em + var(--pku-hover-pad-y) * 2)!important;pointer-events:none!important;background:0 0!important;border-radius:5px!important;position:absolute!important;top:50%!important;transform:translateY(-50%)!important}.pku-nav-link:hover:before{background:#00000012!important}.pku-nav-label{z-index:1!important;font-size:inherit!important;line-height:inherit!important;position:relative!important}.pku-nav-link.active:after{content:""!important;background:${C.accent}!important;border-radius:2px 2px 0 0!important;height:3px!important;position:absolute!important;bottom:-1px!important;left:0!important;right:0!important}.pku-header{display:contents!important}.pku-nav{z-index:1000!important;border-bottom:1px solid ${C.faintLine}!important;position:sticky!important;top:0!important}@media (width>=900px){.pku-header{z-index:10000!important;background:${C.headerBg}!important;border-bottom:1px solid ${C.faintLine}!important;align-items:stretch!important;display:flex!important;position:sticky!important;top:0!important}.pku-titlebar{padding-right:var(--pku-nav-gap)!important}.pku-nav{padding:0 calc(var(--pku-nav-gap) - var(--pku-tab-pad))!important;border-bottom:none!important;flex:1!important;position:static!important}}`;
+	var PageHero = css`.pku-hero{width:var(--pku-content-w)!important;margin:0 auto!important;padding:36px 0 0!important}.pku-hero-head{padding-bottom:14px!important}.pku-hero-title{color:${C.text}!important;margin:0!important;font-size:30px!important;font-weight:600!important}.pku-hero-meta{color:${C.text}!important;margin-top:8px!important;font-size:13px!important;display:block!important}.pku-hero-meta .pku-hero-meta-time{color:${C.courseLink}!important;font-weight:700!important}.pku-hero-head+.pku-hero-rule{background:${C.rule}!important;height:1px!important}`;
+	var Noticies = css`.pku-notice.pku-notice{width:var(--pku-content-w)!important;box-sizing:border-box!important;padding:var(--pku-notice-pad)!important;border:1px solid ${C.noticeBorder}!important;background:${C.headerBg}!important;border-radius:10px!important;margin:16px auto 0!important;font-size:13px!important;line-height:1.75!important}.pku-notice,.pku-notice *{color:${C.text}!important;background:0 0!important;font-size:13px!important}.pku-notice strong{font-weight:700!important}.pku-notice.pku-notice--error{border-color:${C.errorBorder}!important;background:${C.warnClash}!important}.pku-notice.pku-notice--error,.pku-notice.pku-notice--error *{color:${C.warnClashText}!important}.pku-notice.pku-notice--success{border-color:${C.successBorder}!important;background:${C.successFill}!important}.pku-notice .pku-notice-course{color:${C.warnClashText}!important;font-weight:700!important}`;
+	var SectionHeads = css`.pku-section-head{background:0 0!important;position:static!important}.pku-section-headline,.pku-section-headline *{color:${C.text}!important}.pku-section-headline{top:var(--pku-stick-top,0px)!important;z-index:1100!important;border-bottom:1px solid ${C.rule}!important;background:#fff!important;flex-wrap:wrap!important;align-items:baseline!important;gap:10px!important;padding:26px 0 12px!important;display:flex!important;position:sticky!important}.pku-toolbar{z-index:500!important;padding:16px var(--pku-toolbar-pad-x) 0!important;background:#fff!important;position:relative!important}.pku-toolbar.pku-toolbar--above{z-index:995!important}.pku-section-title{color:${C.text}!important;margin:0!important;font-size:20px!important;font-weight:600!important;line-height:1.3!important}.pku-section-note{font-size:13px!important;font-weight:400!important}.pku-section-headline a.pku-timetable-export,.pku-section-headline a.pku-timetable-export:link,.pku-section-headline a.pku-timetable-export:visited,.pku-section-headline a.pku-timetable-export:active{color:${C.courseLink}!important;text-decoration:none!important}.pku-section-headline a.pku-timetable-export:hover{text-decoration:underline!important}.pku-section-headline .pku-credit-info{color:${C.courseLink}!important;font-size:13px!important;font-weight:600!important}.pku-section-head--bare{width:var(--pku-content-w)!important;border-bottom:1px solid ${C.rule}!important;margin:0 auto 20px!important;padding:16px 0 20px!important;position:static!important}.pku-section-head--bare .pku-actions-row{gap:10px!important}`;
+	var Toolbar = css`.pku-toolbar-rule{background:${C.rule}!important;height:1px!important;margin:16px calc(-1 * var(--pku-toolbar-pad-x)) 0!important}.pku-search-row{flex-wrap:wrap!important;align-items:center!important;gap:12px!important;display:flex!important}.pku-search-label{color:${C.text}!important;font-size:13px!important}.pku-search-box{flex:240px!important;align-items:center!important;max-width:360px!important;display:inline-flex!important;position:relative!important}.pku-search-icon{pointer-events:none!important;width:12px!important;height:12px!important;color:${C.noteText}!important;position:absolute!important;left:9px!important}.pku-search-input{box-sizing:border-box!important;width:100%!important;color:${C.text}!important;border:1px solid ${C.fieldBorder}!important;background:#fff!important;border-radius:4px!important;outline:none!important;padding:7px 10px 7px 27px!important;font-family:inherit!important;font-size:13px!important}.pku-search-input::placeholder{color:${C.noteText}!important}.pku-search-input:focus{border-color:${C.btnBlue}!important}.pku-search-legend{color:${C.text}!important;margin-top:8px!important;font-size:13px!important;font-weight:400!important}.pku-actions-row{padding-top:var(--pku-search-gap)!important;flex-wrap:wrap!important;align-items:center!important;gap:12px!important;display:flex!important}.pku-btn,.pku-btn:link,.pku-btn:visited{color:#fff!important;background:${C.btnBlue}!important;cursor:pointer!important;border-radius:5px!important;padding:8px 14px!important;font-size:13px!important;font-weight:500!important;line-height:1.2!important;text-decoration:none!important;display:inline-block!important}.pku-btn:hover{background:${C.btnBlueHover}!important;color:#fff!important;text-decoration:none!important}`;
+	var CourseQuery = css`#qyForm input#b_query{color:#fff!important;background:${C.btnBlue}!important;cursor:pointer!important;box-sizing:border-box!important;text-align:center!important;border:none!important;border-radius:5px!important;width:auto!important;padding:8px 18px!important;font-size:13px!important;font-weight:500!important;line-height:1.2!important}#qyForm input#b_query:hover{background:${C.btnBlueHover}!important}#qyForm input#b_cancel{color:${C.text}!important;border:1px solid ${C.fieldBorder}!important;cursor:pointer!important;box-sizing:border-box!important;text-align:center!important;background:#fff!important;border-radius:5px!important;width:auto!important;padding:8px 14px!important;font-size:13px!important;line-height:1.2!important}#qyForm input#b_cancel:hover{background:${C.facetBg}!important}.selectize-dropdown{z-index:2100!important}.pku-qform{width:var(--pku-content-w)!important;flex-direction:column!important;gap:12px!important;margin:0 auto 4px!important;display:flex!important}.theme-selector,.pku-qform+.value,#qyForm pre.js{display:none!important}.pku-qtypes{border:1px solid ${C.fieldBorder}!important;background:#fff!important;border-radius:6px!important;width:100%!important;display:flex!important;overflow:hidden!important}.pku-qtype{text-align:center!important;color:${C.text}!important;cursor:pointer!important;border-left:1px solid ${C.fieldBorder}!important;background:#fff!important;flex:1 1 0!important;justify-content:center!important;align-items:center!important;padding:10px 8px!important;font-size:13px!important;line-height:1.2!important;transition:background .14s,color .14s!important;display:flex!important}.pku-qtype:first-child{border-left:none!important}.pku-qtype input{opacity:0!important;width:0!important;height:0!important;position:absolute!important}.pku-qtype span{color:inherit!important}.pku-qtype:hover{background:${C.headerBg}!important;color:${C.btnBlue}!important}.pku-qtype--on,.pku-qtype--on:hover{background:${C.btnBlue}!important;color:#fff!important}`;
+	var FilterToggle = css`.pku-filter-toggle{color:${C.text}!important;cursor:pointer!important;background:0 0!important;border:none!important;align-items:center!important;gap:6px!important;margin-left:4px!important;padding:0!important;font-family:inherit!important;font-size:13px!important;line-height:1!important;display:inline-flex!important}`;
+	var Cache = css`.pku-cache{color:${C.noteText}!important;align-items:center!important;gap:8px!important;padding:8px 0 0!important;font-size:12px!important;display:flex!important}.pku-cache-status{white-space:nowrap!important;font-size:12px!important}.pku-cache--done .pku-cache-status{color:${C.text}!important}.pku-cache-track{flex:200px!important;gap:3px!important;max-width:360px!important;display:flex!important}.pku-cache-seg{background:${C.optDot}!important;border-radius:3px!important;flex:1 1 0!important;height:5px!important;transition:background .25s!important}.pku-cache-seg--on{background:${C.btnBlue}!important}.pku-cache-seg--err{background:${C.accent}!important}.pku-goto-page,.pku-goto-page:link,.pku-goto-page:visited{color:${C.link}!important;font-size:12px!important;text-decoration:none!important}.pku-goto-page:hover{text-decoration:underline!important}.pku-goto-hint{color:${C.noteText}!important;overflow-wrap:anywhere!important;white-space:normal!important;font-size:12px!important}.pku-climit{color:${C.text}!important;white-space:nowrap!important;font-size:13px!important}.pku-climit-input{box-sizing:border-box!important;width:4.5em!important;color:${C.text}!important;border:1px solid ${C.fieldBorder}!important;background:#fff!important;border-radius:4px!important;outline:none!important;padding:7px 8px!important;font-family:inherit!important;font-size:13px!important}.pku-climit-input:focus{border-color:${C.btnBlue}!important}.pku-climit-tally{color:${C.noteText}!important;font-size:13px!important}.pku-climit-tally--over{color:${C.warnClashText}!important;font-weight:600!important}.pku-result-count{color:${C.noteText}!important;font-size:13px!important}.pku-reset{color:${C.text}!important;cursor:pointer!important;background:0 0!important;border:none!important;padding:0!important;font-family:inherit!important;font-size:13px!important;text-decoration:none!important}.pku-reset:hover{text-decoration:underline!important}`;
+	var Chevron = css`.pku-chev{vertical-align:middle!important;transform-origin:72% 72%!important;border-bottom:1.5px solid!important;border-right:1.5px solid!important;flex:none!important;width:.46em!important;height:.46em!important;transition:transform .16s!important;display:inline-block!important;transform:rotate(45deg)!important}.pku-chev--open{transform:rotate(-45deg)!important}.pku-filter-toggle .pku-chev{margin-top:-4px!important}`;
+	var FilterPanel = css`.pku-filters{opacity:0!important;visibility:hidden!important;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))!important;gap:10px!important;max-height:0!important;transition:max-height .22s,opacity .18s,padding-top .22s,visibility .22s!important;display:grid!important;overflow:hidden!important}.pku-filters--open{opacity:1!important;visibility:visible!important;max-height:140px!important;padding-top:12px!important}.pku-filters--done{max-height:none!important;overflow:visible!important}.pku-facet{border:1px solid ${C.fieldBorder}!important;background:#fff!important;border-radius:6px!important;align-self:start!important;transition:background .18s!important;position:relative!important}.pku-facet--open{background:${C.facetBg}!important;border-bottom-right-radius:0!important;border-bottom-left-radius:0!important}.pku-facet--closing .pku-facet-list{border-bottom-right-radius:6px!important;border-bottom-left-radius:6px!important;transition:max-height .1s,visibility .1s!important}.pku-facet-btn{box-sizing:border-box!important;width:100%!important;color:${C.text}!important;cursor:pointer!important;text-align:left!important;background:0 0!important;border:none!important;justify-content:space-between!important;align-items:center!important;gap:8px!important;padding:8px 10px!important;font-family:inherit!important;font-size:13px!important;display:flex!important}.pku-facet-list{z-index:960!important;visibility:hidden!important;background:${C.facetBg}!important;border:1px solid ${C.fieldBorder}!important;border-top:none!important;border-radius:0 0 6px 6px!important;max-height:0!important;transition:max-height .24s,visibility .24s!important;position:absolute!important;top:100%!important;left:-1px!important;right:-1px!important;overflow:hidden!important;box-shadow:0 6px 18px #0000001f!important}.pku-facet--open .pku-facet-list{visibility:visible!important;max-height:240px!important}.pku-facet-opts{max-height:252px!important;margin:0!important;padding:0 10px 8px 22px!important;list-style:none!important;overflow-y:auto!important}.pku-opt{color:${C.text}!important;cursor:pointer!important;align-items:center!important;gap:8px!important;padding:9px 0 3px!important;font-size:13px!important;display:flex!important}.pku-opt input{opacity:0!important;width:0!important;height:0!important;position:absolute!important}.pku-dot{border:1.5px solid ${C.optDot}!important;background:#fff!important;border-radius:50%!important;flex:none!important;width:13px!important;height:13px!important;transition:background .15s,border-color .15s!important}.pku-opt input:checked+.pku-dot{background:${C.btnBlue}!important;border-color:${C.btnBlue}!important;box-shadow:inset 0 0 0 2.5px #fff!important}.pku-opt input:focus-visible+.pku-dot{outline:2px solid ${C.btnBlue}!important;outline-offset:1px!important}.pku-opt-text{font-size:13px!important}`;
+	var Footer = css`.pku-footer{box-sizing:border-box!important;width:100%!important;padding:9px var(--pku-gutter)!important;background:${C.headerBg}!important;color:${C.text}!important;text-align:center!important;margin:24px 0 0!important;font-size:13px!important}.pku-footer a,.pku-footer a:link,.pku-footer a:visited{color:${C.link}!important;background:0 0!important;text-decoration:none!important}.pku-footer a:hover{text-decoration:underline!important}`;
+	var Pager = css`.pku-pager-cell{z-index:900!important;box-sizing:border-box!important;border-top:1px solid ${C.gridLine}!important;background:#fff!important;padding:12px 10px!important;position:relative!important}.pku-pager{flex-wrap:wrap!important;justify-content:center!important;align-items:center!important;gap:10px!important;display:flex!important}.pku-pg-info{color:${C.text}!important;font-size:13px!important}.pku-pg,.pku-pg:link,.pku-pg:visited{cursor:pointer!important;color:${C.btnBlue}!important;background:0 0!important;justify-content:center!important;align-items:center!important;gap:1px!important;text-decoration:none!important;display:inline-flex!important}a.pku-pg,a.pku-pg:link,a.pku-pg:visited,a.pku-pg:active,a.pku-pg:hover,span.pku-pg{color:${C.btnBlue}!important;background:0 0!important;border-radius:0!important;padding:5px 7px!important;text-decoration:none!important}a.pku-pg:hover{color:${C.btnBlueHover}!important}.pku-pg--off{opacity:.35!important;cursor:default!important;pointer-events:none!important}.pku-pg-chev{border-top:1.7px solid!important;border-right:1.7px solid!important;width:.42em!important;height:.42em!important;display:inline-block!important}.pku-pg-chev--right{transform:rotate(45deg)!important}.pku-pg-chev--left{transform:rotate(-135deg)!important}.pku-pg--edge .pku-pg-chev+.pku-pg-chev{margin-left:-3px!important}.pku-pg-jump{color:${C.text}!important;font-size:13px!important}.pku-pg-jump select{border:1px solid ${C.fieldBorder}!important;background:#fff!important;border-radius:4px!important;padding:4px 6px!important;font-family:inherit!important;font-size:13px!important}`;
+	var Grid = css`table.datagrid{border-collapse:collapse!important;table-layout:fixed!important;border:none!important;width:100%!important;font-size:13px!important}table.datagrid tr,table.datagrid tr.datagrid-header,table.datagrid tr.datagrid-footer{background:0 0!important;border:none!important}table.datagrid td,table.datagrid th{border-bottom:none!important;border-left:none!important;border-right:none!important;border-top:1px solid ${C.gridLine}!important;vertical-align:top!important;overflow-wrap:anywhere!important;padding:8px 10px!important}table.datagrid tr.pku-head-row>th,table.datagrid tr.pku-head-row>td{top:var(--pku-head-top,0px)!important;z-index:880!important;background:${C.headBg}!important;color:${C.text}!important;text-align:center!important;vertical-align:middle!important;border-top:none!important;font-size:13px!important;font-weight:600!important;position:sticky!important}table.datagrid.pku-no-title tr.pku-head-row>th,table.datagrid.pku-no-title tr.pku-head-row>td{top:var(--pku-stick-top,0px)!important}table.datagrid th .pku-head{white-space:normal!important;overflow-wrap:anywhere!important;display:block!important}table.datagrid .pku-scrollcell{border-left:1px solid ${C.edgeLine}!important;border-right:1px solid ${C.edgeLine}!important;padding:0!important;overflow:hidden!important}.pku-hscroll{overflow:auto hidden!important}table.datagrid tr:not(.pku-head-row) .pku-hscroll{scrollbar-width:none!important;-ms-overflow-style:none!important}table.datagrid tr:not(.pku-head-row) .pku-hscroll::-webkit-scrollbar{height:0!important;display:none!important}table.pku-inner{border-collapse:collapse!important;table-layout:fixed!important;background:0 0!important;width:max-content!important}table.pku-inner td,table.pku-inner th{vertical-align:top!important;overflow-wrap:anywhere!important;background:0 0!important;border:none!important;padding:8px 10px!important}table.pku-inner td:not(.pku-info-cell) .pku-cell{-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;height:3em!important;min-height:3em!important;line-height:1.5!important;display:-webkit-box!important;overflow:hidden!important}table.datagrid tr.pku-head-row .pku-scrollcell,table.datagrid tr.pku-head-row table.pku-inner th,table.datagrid tr.pku-head-row table.pku-inner td{vertical-align:middle!important}table.datagrid tr.pku-head-row .pku-hscroll{scrollbar-width:thin!important;height:100%!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar{height:5px!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-thumb{background:${C.edgeLine}!important;border-radius:3px!important}table.datagrid tr.pku-head-row .pku-hscroll::-webkit-scrollbar-track{background:0 0!important}table.datagrid tr.pku-head-row .pku-cell{min-height:0!important}table.datagrid .pku-col-name{border-right:1px solid ${C.gridLine}!important}table.datagrid td .pku-cell{min-height:3em!important;line-height:1.5!important;display:block!important}table.datagrid a,table.datagrid a:link,table.datagrid a:visited,table.datagrid a:active,table.datagrid a:hover{color:${C.courseLink}!important;cursor:pointer!important;background:0 0!important;text-decoration:none!important}table.datagrid a:hover{text-decoration:underline!important}table.datagrid a span,table.datagrid a font{color:inherit!important;text-decoration:inherit!important}tr.pku-r-even>td{background:${C.zebraEven}!important}tr.pku-r-odd>td{background:${C.zebraOdd}!important}tr.pku-f-name>td{background:${C.rowFolded}!important}table.datagrid tr.pku-row:hover>td{background:${C.rowHover}!important}`;
+	var Warnings = css`table.datagrid tr.pku-over-credit>td{background:${C.warnCredit}!important}table.datagrid tr.pku-clash>td{background:${C.warnClash}!important;color:${C.warnClashText}!important}table.datagrid tr.pku-f-name.pku-clash>td,table.datagrid tr.pku-f-name.pku-over-credit>td{background:${C.rowFolded}!important;color:${C.text}!important}table.datagrid tr.pku-clash a,table.datagrid tr.pku-over-credit a{color:${C.courseLink}!important}table.datagrid tr.pku-clash:hover>td,table.datagrid tr.pku-over-credit:hover>td{filter:brightness(.97)!important}tr.pku-group-start>td,tr.pku-group-start>th{border-top:1px solid ${C.groupLine}!important}`;
+	var Fold = css`table.datagrid tr.pku-fold>td{border-top-width:0!important;overflow:hidden!important}table.datagrid tr.pku-fold>td>.pku-cell{min-height:0!important;display:block!important;overflow:hidden!important}table.datagrid tr.pku-fold--shut>td{padding-top:0!important;padding-bottom:0!important}table.datagrid tr.pku-fold--anim>td{transition:padding-top .24s,padding-bottom .24s!important}table.datagrid tr.pku-fold--anim>td>.pku-cell,table.datagrid tr.pku-fold--anim>td>.pku-hscroll{transition:height .24s!important}tr.pku-hidden,tr.pku-filtered-out{display:none!important}table.datagrid tr.datagrid-all>td{background:${C.rowHover}!important}table.datagrid tr.datagrid-all.pku-f-name>td{background:${C.rowFolded}!important}.pku-folded-mark{color:${C.noteText}!important;font-size:12px!important}table.datagrid .pku-foldcell--empty{width:4px!important;padding:0!important}table.datagrid td.pku-foldcell,table.datagrid th.pku-foldcell{text-align:center!important;vertical-align:middle!important;width:26px!important;padding:8px 0 8px 4px!important}.pku-fold-btn{cursor:pointer!important;width:1.5em!important;height:1.5em!important;color:${C.text}!important;background:0 0!important;border:none!important;justify-content:center!important;align-items:center!important;padding:0!important;font-size:13px!important;display:inline-flex!important}#classAssignment .course{padding-left:2px!important}`;
+	var Timetable = css`.pku-tt{z-index:3000!important;cursor:grab!important;color:${C.text}!important;--pku-tt-head-h:20px!important;border-radius:6px!important;align-items:stretch!important;font-size:12px!important;line-height:1.25!important;display:flex!important;position:fixed!important;box-shadow:0 10px 30px #0000002e!important}.pku-tt-body{z-index:1!important;box-sizing:border-box!important;border:1px solid ${C.edgeLine}!important;background:#fff!important;border-right:none!important;border-radius:6px 0 0 6px!important;position:relative!important;overflow:hidden!important}.pku-tt--anim .pku-tt-body{transition:width .24s,border-left-width .24s!important}.pku-tt--shut .pku-tt-body{border-left-width:0!important}.pku-tt-grid{touch-action:none!important;box-sizing:border-box!important;background:${C.gridLine}!important;gap:1px!important;height:100%!important;display:grid!important}.pku-tt-cell,.pku-tt-head,.pku-tt-side{box-sizing:border-box!important;background:#fff!important;justify-content:center!important;align-items:center!important;padding:0!important;display:flex!important;overflow:hidden!important}.pku-tt-head{background:${C.headerBg}!important;white-space:nowrap!important;font-weight:600!important}.pku-tt-side{color:${C.noteText}!important;white-space:nowrap!important;font-weight:600!important}.pku-tt-fit{box-sizing:border-box!important;text-align:center!important;overflow-wrap:anywhere!important;transform-origin:50%!important;flex:none!important;width:max-content!important;padding:2px!important}.pku-tt-exam{opacity:.75!important}.pku-tt-sep{opacity:.45!important;border-top:1px solid!important;width:55%!important;margin:1px auto!important}.pku-tt-bar{box-sizing:border-box!important;background:${C.headerBg}!important;border:1px solid ${C.edgeLine}!important;touch-action:none!important;border-radius:0 6px 6px 0!important;flex-direction:column!important;flex:none!important;align-items:center!important;width:30px!important;padding-top:5px!important;display:flex!important}.pku-tt--dragging,.pku-tt--dragging .pku-tt-bar{cursor:grabbing!important}.pku-tt-grip,.pku-tt-chev{cursor:default!important}.pku-tt-chev{cursor:pointer!important}.pku-tt-grip{cursor:nesw-resize!important}.pku-tt-chev{cursor:pointer!important;width:28px!important;height:28px!important;color:${C.text}!important;background:0 0!important;border:none!important;flex:none!important;justify-content:center!important;align-items:center!important;padding:0!important;display:flex!important}.pku-tt-chev .pku-chev{transform-origin:65% 65%!important;transition:transform .24s!important;transform:rotate(-45deg)!important}.pku-tt--shut .pku-tt-chev .pku-chev{transform:rotate(135deg)!important}.pku-tt-grip{cursor:nesw-resize!important;touch-action:none!important;width:17px!important;height:17px!important;position:absolute!important;bottom:-11px!important;left:-11px!important}.pku-tt--shut .pku-tt-grip{display:none!important}.pku-tt-grip:before{content:""!important;border-left:2px solid ${C.text}!important;border-bottom:2px solid ${C.text}!important;filter:drop-shadow(1px 1px 2px #00000073)!important;border-bottom-left-radius:5px!important;transition:border-width .12s!important;position:absolute!important;inset:0!important}.pku-tt-grip:hover:before,.pku-tt--sizing .pku-tt-grip:before{border-bottom-width:4px!important;border-left-width:4px!important}.pku-tt--stale .pku-tt-grid{filter:blur(8px)!important}.pku-tt-stale{z-index:2!important;box-sizing:border-box!important;text-align:center!important;pointer-events:none!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;gap:8px!important;padding:20px!important;display:flex!important;position:absolute!important;inset:0!important}.pku-tt-stale-main{color:${C.text}!important;font-size:14px!important;font-weight:600!important;line-height:1.5!important}.pku-tt-stale-sub{color:${C.noteText}!important;font-size:11px!important;line-height:1.5!important}`;
+	var state = {
+		gridModel: new WeakMap(),
+		lastOpCourse: null
+	};
+	var pagerState = {
+		searchPage: 0,
+		searchActive: false,
+		searchTotal: 0,
+		pagerCtl: null
+	};
 	var COL = {
 		id: ["课程号"],
 		name: ["课程名", "课程名称"],
@@ -1377,12 +83,12 @@
 		],
 		note: ["备注"]
 	};
-	var NOTE_HEAD = "备注";
 	var FILTER_COLS = {
 		"课程类别": ["课程类别"],
 		"学分": ["学分"],
 		"开课单位": ["开课单位"]
 	};
+	var NOTE_HEAD = "备注";
 	function findCol(labels, aliases) {
 		for (const a of aliases) {
 			const i = labels.indexOf(a);
@@ -1390,6 +96,125 @@
 		}
 		return -1;
 	}
+	var FACETS = [
+		{
+			label: "课程类别",
+			column: "课程类别"
+		},
+		{
+			label: "学分",
+			column: "学分"
+		},
+		{
+			label: "开课学院",
+			column: "开课单位"
+		},
+		{
+			label: "状态",
+			options: [
+				"已满",
+				"未满",
+				"冲突",
+				"不冲突"
+			]
+		}
+	];
+	var STATUS_GROUPS = [["已满", "未满"], ["冲突", "不冲突"]];
+	var DAY_NAMES = [
+		"一",
+		"二",
+		"三",
+		"四",
+		"五",
+		"六",
+		"日"
+	];
+	var SCROLL_COLS = [
+		"年级",
+		"开课年级",
+		"上课/考试信息",
+		"上课时间",
+		"教室信息",
+		"考试时间",
+		"备注",
+		"自选P/NP"
+	];
+	var SCROLL_COL_EM = {
+		"年级": 5,
+		"开课年级": 6,
+		"上课/考试信息": 24,
+		"上课时间": 24,
+		"教室信息": 24,
+		"考试时间": 13,
+		"备注": 22,
+		"自选P/NP": 6
+	};
+	var SCROLL_ORDER = [
+		"上课/考试信息",
+		"上课时间",
+		"教室信息",
+		"考试时间",
+		"备注",
+		"年级",
+		"开课年级",
+		"自选P/NP"
+	];
+	var COL_KEEP = .85;
+	var COL_WIDE_K = .65;
+	var COL_HEAD_K = 1.5;
+	var COL_NOTE_K = .5;
+	var COL_HOLD = { "课程号": 3 };
+	var COL_CODES = ["课程号", "课程班号"];
+	var FOOTER_MAIL = "sermis@pku.edu.cn";
+	var CACHE_STORE_KEY = "pku-elective-page-cache";
+	var TT_CACHE = "pku-timetable";
+	var TT_PREF = "pku-timetable-pref";
+	var TT_STALE = "pku-timetable-stale";
+	var Q_TEXT = ["courseID", "courseName"];
+	var Q_SEL = ["courseDay", "courseTime"];
+	var NAV = [
+		{
+			label: "选课计划",
+			match: (u) => /electivePlan|courseQuery/.test(u)
+		},
+		{
+			label: "选课结果",
+			match: (u) => /showResults/.test(u)
+		},
+		{
+			label: "预选",
+			match: (u) => /electiveWork/.test(u)
+		},
+		{
+			label: "补退选",
+			match: (u) => /SupplyCancel/.test(u)
+		},
+		{
+			label: "补选",
+			match: (u) => /SupplyOnly/.test(u)
+		},
+		{
+			label: "帮助",
+			match: (u) => /HelpController/.test(u)
+		},
+		{
+			label: "退出",
+			match: (u) => /logout/.test(u)
+		}
+	];
+	function currentUrl() {
+		return location.pathname + location.search;
+	}
+	function activeNav() {
+		return NAV.find((n) => n.match(currentUrl())) || null;
+	}
+	function isResultsPage() {
+		return /showResults/.test(currentUrl());
+	}
+	function timetableStartsOpen() {
+		return /courseQuery|electiveWork/i.test(location.href);
+	}
+	var CREDIT_INFO = null;
 	function infoLines(cell) {
 		if (!cell) return [];
 		return (cell.innerHTML || "").split(/<br\s*\/?>/i).map((frag) => {
@@ -1462,7 +287,7 @@
 		});
 	}
 	function parseSlots(text) {
-		const t = text.replace(/[\s\u00a0]+/g, "");
+		const t = text.replace(/[\s ]+/g, "");
 		const DAYS = "一二三四五六日";
 		return [...t.matchAll(/(每周|双周|单周)?周([一二三四五六日])(\d{1,2})~(\d{1,2})节/g)].map((m) => ({
 			parity: m[1] || "每周",
@@ -1485,24 +310,16 @@
 		} : null;
 	}
 	function setLastOpCourse(name) {
+		state.lastOpCourse = name;
 		try {
 			sessionStorage.setItem("pku-last-op-course", name);
 		} catch (e) {}
 	}
 	function consumeLastOpCourse() {
+		state.lastOpCourse = null;
 		try {
 			sessionStorage.removeItem("pku-last-op-course");
 		} catch (e) {}
-	}
-	function takeNavState() {
-		let s = null;
-		try {
-			s = JSON.parse(sessionStorage.getItem("pku-nav") || "null");
-		} catch (e) {}
-		try {
-			sessionStorage.removeItem("pku-nav");
-		} catch (e) {}
-		return s;
 	}
 	function readCreditInfo(root = document) {
 		const credit = [...root.querySelectorAll("font.pkuportal-remark")].find((f) => /当前已选总学分/.test(f.textContent));
@@ -1561,7 +378,7 @@
 		});
 		const txt = (tr, i) => {
 			const c = i >= 0 && tr.children[i];
-			return c ? c.textContent.replace(/[\s\u00a0]+/g, " ").trim() : "";
+			return c ? c.textContent.replace(/[\s ]+/g, " ").trim() : "";
 		};
 		r.name = txt(r.tr, iName);
 		r.q = [
@@ -1578,22 +395,589 @@
 		const cr = parseFloat(txt(r.tr, at(["学分"])));
 		r.credit = isNaN(cr) ? 0 : cr;
 	}
-	var pagerState = {
-		searchPage: 0,
-		searchActive: false,
-		searchTotal: 0,
-		pagerCtl: null
-	};
-	function rememberNav(opts = {}) {
-		try {
-			sessionStorage.setItem("pku-nav", JSON.stringify({
-				q: opts.q || "",
-				pin: opts.pin || ""
-			}));
-		} catch (e) {}
+	function chevron() {
+		const c = document.createElement("span");
+		c.className = "pku-chev";
+		return c;
 	}
-	function currentSearchQuery() {
-		return (document.getElementById("pku-course-search")?.value || "").trim();
+	function lockCellHeights(tr) {
+		[...tr.children].forEach((td) => {
+			if (td.style.height) return;
+			td.style.height = td.getBoundingClientRect().height + "px";
+		});
+	}
+	function foldBox(td) {
+		return td.querySelector(":scope > .pku-cell, :scope > .pku-hscroll");
+	}
+	function armFold(tr) {
+		const h = tr.getBoundingClientRect().height;
+		const cells = [...tr.children].map((td) => {
+			const cs = getComputedStyle(td);
+			return {
+				box: foldBox(td),
+				pad: (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0)
+			};
+		});
+		const boxes = [];
+		cells.forEach((c) => {
+			if (!c.box) return;
+			boxes.push({
+				el: c.box,
+				h: Math.max(0, h - c.pad)
+			});
+		});
+		tr.classList.add("pku-fold");
+		boxes.forEach((b) => {
+			b.el.style.height = b.h + "px";
+		});
+		return boxes;
+	}
+	function clearFold(tr) {
+		tr.classList.remove("pku-fold", "pku-fold--anim", "pku-fold--shut");
+		[...tr.children].forEach((td) => {
+			const box = foldBox(td);
+			if (box) box.style.removeProperty("height");
+		});
+	}
+	function animateRows(rows, folded, onDone) {
+		if (!rows.length) {
+			if (onDone) onDone();
+			return;
+		}
+		rows.forEach((r) => {
+			clearTimeout(r._foldTimer);
+			r._foldTimer = null;
+		});
+		rows.forEach((r) => {
+			clearFold(r.tr);
+			r.tr.classList.remove("pku-hidden");
+		});
+		const armed = rows.map((r) => armFold(r.tr));
+		if (!folded) {
+			rows.forEach((r) => r.tr.classList.add("pku-fold--shut"));
+			armed.forEach((boxes) => boxes.forEach((b) => {
+				b.el.style.height = "0px";
+			}));
+		}
+		rows[0].tr.getBoundingClientRect().height;
+		requestAnimationFrame(() => {
+			rows.forEach((r) => {
+				r.tr.classList.add("pku-fold--anim");
+				r.tr.classList.toggle("pku-fold--shut", folded);
+			});
+			armed.forEach((boxes) => boxes.forEach((b) => {
+				b.el.style.height = folded ? "0px" : b.h + "px";
+			}));
+			const timer = setTimeout(() => {
+				rows.forEach((r) => {
+					if (folded) r.tr.classList.add("pku-hidden");
+					clearFold(r.tr);
+					r._foldTimer = null;
+				});
+				if (onDone) onDone();
+			}, 270);
+			rows.forEach((r) => {
+				r._foldTimer = timer;
+			});
+		});
+	}
+	function foldButton() {
+		const el = document.createElement("button");
+		el.type = "button";
+		el.className = "pku-fold-btn";
+		el.setAttribute("aria-expanded", "true");
+		const chev = chevron();
+		el.appendChild(chev);
+		let folded = false;
+		return {
+			el,
+			folded: () => folded,
+			onToggle(fn) {
+				el.addEventListener("click", () => {
+					folded = !folded;
+					el.setAttribute("aria-expanded", String(!folded));
+					chev.classList.toggle("pku-chev--open", folded);
+					fn(folded);
+				});
+			}
+		};
+	}
+	function markFolded(leader, hiddenRows) {
+		const row = leader.tr;
+		row.querySelectorAll("[data-pku-orig]").forEach((cell) => {
+			cell.innerHTML = cell.getAttribute("data-pku-orig");
+			cell.removeAttribute("data-pku-orig");
+		});
+		if (!hiddenRows.length) return;
+		const norm = (el) => el.textContent.replace(/[\s ]+/g, " ").trim();
+		const mark = (cell, others, force) => {
+			const base = norm(cell);
+			if (!force && !others.some((o) => o && norm(o) !== base)) return;
+			cell.setAttribute("data-pku-orig", cell.innerHTML);
+			cell.innerHTML = "<span class=\"pku-cell pku-folded-mark\">已折叠</span>";
+		};
+		const innerOf = (cell) => cell ? [...cell.querySelectorAll("table.pku-inner > tr > *")] : [];
+		for (let c = 0; c < row.children.length; c++) {
+			const mine = row.children[c];
+			if (!mine || mine.classList.contains("pku-foldcell")) continue;
+			if (mine.classList.contains("pku-col-name")) continue;
+			if (mine.classList.contains("pku-scrollcell")) {
+				innerOf(mine).forEach((cell, k) => {
+					mark(cell, hiddenRows.map((r) => innerOf(r.tr.children[c])[k]));
+				});
+				continue;
+			}
+			if (mine.querySelector("input") || mine.querySelector("a[href*=\"electCourse.do\"], a[href*=\"cancelCourse.do\"]")) {
+				mark(mine, [], true);
+				continue;
+			}
+			mark(mine, hiddenRows.map((r) => r.tr.children[c]));
+		}
+	}
+	function textEm(str) {
+		let em = 0;
+		for (const ch of str) em += /[⺀-￯]/.test(ch) ? 1 : .55;
+		return em;
+	}
+	function collapseScrollColumns(grid, headRow, bodyRows, measured) {
+		const labels = [...headRow.children].map(headText);
+		const wanted = labels.map((l) => SCROLL_COLS.includes(l));
+		let best = {
+			start: -1,
+			len: 0
+		}, run = 0;
+		wanted.forEach((w, i) => {
+			run = w ? run + 1 : 0;
+			if (run > best.len) best = {
+				start: i - run + 1,
+				len: run
+			};
+		});
+		if (best.len < 2) return false;
+		const first = best.start, last = best.start + best.len - 1;
+		const span = last - first + 1;
+		const paneLabels = labels.slice(first, last + 1);
+		const rankOf = (l) => {
+			const i = SCROLL_ORDER.indexOf(l);
+			return i < 0 ? SCROLL_ORDER.length : i;
+		};
+		const order = paneLabels.map((_, k) => k).sort((a, b) => rankOf(paneLabels[a]) - rankOf(paneLabels[b]) || a - b);
+		const paneEm = order.map((k) => {
+			const l = paneLabels[k];
+			const m = measured && measured[first + k];
+			const w = m ? m.w : SCROLL_COL_EM[l] || 8;
+			return COL.note && COL.note.includes(l) ? w * COL_NOTE_K : w;
+		});
+		const widths = paneEm.map((w) => w.toFixed(2) + "em");
+		const convert = (row, tag) => {
+			const group = [...row.children].slice(first, last + 1);
+			if (!group.length) return;
+			const ordered = order.map((k) => group[k]);
+			ordered.forEach((cell, i) => {
+				cell.style.removeProperty("width");
+				cell.removeAttribute("width");
+				if (COL.info.includes(paneLabels[order[i]])) cell.classList.add("pku-info-cell");
+			});
+			const host = document.createElement(tag);
+			host.className = "pku-scrollcell";
+			const pane = document.createElement("div");
+			pane.className = "pku-hscroll";
+			const inner = document.createElement("table");
+			inner.className = "pku-inner";
+			const cg = document.createElement("colgroup");
+			widths.forEach((w) => {
+				const col = document.createElement("col");
+				col.style.width = w;
+				cg.appendChild(col);
+			});
+			const tr = document.createElement("tr");
+			ordered.forEach((cell) => tr.appendChild(cell));
+			inner.append(cg, tr);
+			pane.appendChild(inner);
+			host.appendChild(pane);
+			row.insertBefore(host, row.children[first] || null);
+		};
+		convert(headRow, "th");
+		bodyRows.forEach((r) => convert(r.tr, "td"));
+		collapseScrollColumns.last = {
+			first,
+			last,
+			widths,
+			order,
+			em: paneEm.slice(),
+			base: paneEm.slice(),
+			at: first,
+			span,
+			w: paneEm.reduce((a, b) => a + b, 0),
+			floor: paneEm[0] || 8
+		};
+		return true;
+	}
+	function syncScrollPanes(grid) {
+		const panes = [...grid.querySelectorAll(".pku-hscroll")];
+		if (panes.length < 2) return;
+		let syncing = false;
+		const spread = (x) => {
+			syncing = true;
+			panes.forEach((p) => {
+				if (Math.round(p.scrollLeft) !== Math.round(x)) p.scrollLeft = x;
+			});
+			requestAnimationFrame(() => {
+				syncing = false;
+			});
+		};
+		panes.forEach((pane) => {
+			pane.addEventListener("scroll", () => {
+				if (!syncing) spread(pane.scrollLeft);
+			});
+			pane.addEventListener("wheel", (e) => {
+				if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+				const max = pane.scrollWidth - pane.clientWidth;
+				if (max <= 0) return;
+				const next = Math.max(0, Math.min(max, pane.scrollLeft + e.deltaX));
+				if (next !== pane.scrollLeft) {
+					e.preventDefault();
+					pane.scrollLeft = next;
+					spread(next);
+				}
+			}, { passive: false });
+		});
+	}
+	var WIDTH_WATCH = [];
+	function onWidthChange(fn) {
+		if (!WIDTH_WATCH.length) {
+			let last = innerWidth, timer = 0;
+			addEventListener("resize", () => {
+				if (innerWidth === last) return;
+				last = innerWidth;
+				clearTimeout(timer);
+				timer = setTimeout(() => WIDTH_WATCH.forEach((f) => {
+					try {
+						f();
+					} catch (e) {}
+				}), 120);
+			});
+		}
+		WIDTH_WATCH.push(fn);
+	}
+	function cellEm(td) {
+		if (!td) return 0;
+		let best = 0;
+		(td.innerHTML || "").split(/<br\s*\/?>/i).forEach((frag) => {
+			const box = document.createElement("div");
+			box.innerHTML = frag;
+			const t = box.textContent.replace(/\s+/g, " ").trim();
+			if (t) best = Math.max(best, textEm(t));
+		});
+		return best;
+	}
+	function cellLineText(td) {
+		if (!td) return "";
+		let best = "";
+		(td.innerHTML || "").split(/<br\s*\/?>/i).forEach((frag) => {
+			const box = document.createElement("div");
+			box.innerHTML = frag;
+			const t = box.textContent.replace(/\s+/g, " ").trim();
+			if (t.length > best.length) best = t;
+		});
+		return best;
+	}
+	function columnTarget(label, texts) {
+		if (COL_CODES.includes(label)) return 1;
+		if (texts.length && texts.every((t) => /^[\d./\s]+$/.test(t))) return 1;
+		if (texts.reduce((m, t) => Math.max(m, t.length), 0) <= 4) return 1;
+		return 2;
+	}
+	function keepEm(vals) {
+		if (!vals.length) return 0;
+		const v = vals.slice().sort((a, b) => a - b);
+		if (v.length < 5) return v[Math.max(0, v.length - 2)];
+		return v[Math.min(v.length - 1, Math.floor(COL_KEEP * v.length))];
+	}
+	function measureColumns(headRow, bodyRows) {
+		return [...headRow.children].map((th, c) => {
+			const gutter = th.classList.contains("pku-foldcell");
+			const label = gutter ? "" : headText(th);
+			const vals = [];
+			const texts = [];
+			bodyRows.forEach((r) => {
+				const td = r.tr ? r.tr.children[c] : r.children[c];
+				const e = cellEm(td);
+				if (e) vals.push(e);
+				const t = cellLineText(td);
+				if (t) texts.push(t);
+			});
+			return {
+				label,
+				gutter,
+				w: Math.max(keepEm(vals), textEm(label) * COL_HEAD_K),
+				target: columnTarget(label, texts)
+			};
+		});
+	}
+	function shrinkCols(cols, need) {
+		for (let pass = 0; pass < 24 && need > .01; pass++) {
+			const live = cols.filter((c) => c.w > c.min + .01);
+			const pool = live.reduce((a, c) => a + c.w / (c.hold || 1), 0);
+			if (pool <= 0) break;
+			let took = 0;
+			live.forEach((c) => {
+				const cut = Math.min(need * (c.w / (c.hold || 1)) / pool, c.w - c.min);
+				c.w -= cut;
+				took += cut;
+			});
+			if (took <= .001) break;
+			need -= took;
+		}
+		return need;
+	}
+	function setPaneWidths(grid, pane) {
+		pane.em.forEach((w, k) => {
+			pane.widths[k] = w.toFixed(2) + "em";
+		});
+		grid.querySelectorAll("table.pku-inner > colgroup").forEach((cg) => {
+			[...cg.children].forEach((col, k) => {
+				if (pane.widths[k]) col.style.width = pane.widths[k];
+			});
+		});
+	}
+	function assignColumnWidths(grid, headRow, measured, pane) {
+		const cells = [...headRow.children];
+		const fs = parseFloat(getComputedStyle(grid).fontSize) || 13;
+		const padEm = 20 / fs;
+		const px = grid.getBoundingClientRect().width || grid.parentElement && grid.parentElement.clientWidth || 0;
+		if (!px || !measured) return;
+		if (pane && pane.base) {
+			pane.em = pane.base.slice();
+			pane.w = pane.base.reduce((a, b) => a + b, 0);
+		}
+		const cols = [];
+		cells.forEach((th, i) => {
+			if (th.classList.contains("pku-foldcell")) return;
+			if (th.classList.contains("pku-scrollcell")) cols.push({
+				th,
+				pane: true,
+				label: "",
+				w: pane.w,
+				hold: 1,
+				target: 2
+			});
+			else {
+				const m = measured[pane && i > pane.at ? i + pane.span - 1 : i];
+				cols.push({
+					th,
+					pane: false,
+					label: m ? m.label : "",
+					w: m ? m.w : 4,
+					hold: 1,
+					target: m ? m.target : 1
+				});
+			}
+		});
+		if (!cols.length) return;
+		const room = px / fs - cols.length * padEm;
+		if (room <= 0) return;
+		cols.forEach((c) => {
+			c.hold = COL_HOLD[c.label] || 1;
+			if (c.hold == 1 && c.w < .05) c.hold = 5;
+			const W = c.w;
+			if (c.w > .2 * room) {
+				c.w *= COL_WIDE_K;
+				c.reduced = true;
+			}
+			c.full = c.w;
+			c.min = W * 1.1 / (c.target || 1);
+		});
+		const paneCol = cols.find((c) => c.pane);
+		if (paneCol) paneCol.min = Math.min(paneCol.w, pane.floor);
+		let total = cols.reduce((a, c) => a + c.w, 0);
+		if (total <= room) {
+			const extra = room - total;
+			const pool = total || 1;
+			cols.forEach((c) => {
+				if (!c.pane) {
+					c.w += extra * (c.w / pool);
+					return;
+				}
+				pane.em = pane.em.map((w) => w + extra * (w / pool));
+				c.w = pane.em.reduce((a, b) => a + b, 0);
+			});
+			if (pane && pane.em) setPaneWidths(grid, pane);
+		} else {
+			let need = total - room;
+			if (paneCol) {
+				const cut = Math.min(need, paneCol.w - paneCol.min);
+				paneCol.w -= cut;
+				need -= cut;
+			}
+			need = shrinkCols(cols.filter((c) => !c.reduced && !c.pane), need);
+			if (need > .01) {
+				cols.forEach((c) => {
+					c.min = 1;
+				});
+				shrinkCols(cols, need);
+			}
+		}
+		const sum = cols.reduce((a, c) => a + c.w, 0) || 1;
+		cols.forEach((c) => {
+			c.th.removeAttribute("width");
+			c.th.style.setProperty("width", (c.w / sum * 100).toFixed(2) + "%", "important");
+		});
+		cells.forEach((th) => {
+			if (th.classList.contains("pku-dscrollcell")) return;
+			if (!th.querySelector(".pku-head")) {
+				const box = document.createElement("span");
+				box.className = "pku-head";
+				while (th.firstChild) box.appendChild(th.firstChild);
+				th.appendChild(box);
+			}
+		});
+	}
+	function enhanceGrid(grid, opts) {
+		const { fold = false, groupRules = false } = opts || {};
+		const head = headerCells(grid);
+		console.log("enchance grid");
+		console.log(head.row);
+		console.log("------------");
+		if (!head) return 0;
+		head.row.classList.add("pku-head-row");
+		grid.querySelectorAll("tr.datagrid-footer").forEach((tr) => {
+			tr.classList.remove("datagrid-footer");
+		});
+		const labels = head.cells.map(headText);
+		const iName = findCol(labels, COL.name);
+		const iInfo = findCol(labels, COL.info);
+		if (iName < 0) return 0;
+		const colCount = head.cells.length;
+		const dataRows = [...grid.querySelectorAll("tr")].filter((tr) => !tr.querySelector("th") && tr.children.length >= colCount);
+		if (!dataRows.length) return 0;
+		const tail = [...grid.querySelectorAll("tr")].filter((tr) => tr !== head.row && !dataRows.includes(tr));
+		if (iInfo >= 0) {
+			const noteTh = document.createElement("th");
+			noteTh.className = "datagrid";
+			noteTh.textContent = NOTE_HEAD;
+			head.row.insertBefore(noteTh, head.cells[iInfo].nextSibling);
+			dataRows.forEach((tr) => {
+				const src = tr.children[iInfo];
+				const parts = parseInfoCell(src);
+				if (src) src.innerHTML = parts.time;
+				const n = document.createElement("td");
+				n.className = "datagrid";
+				n.textContent = parts.note;
+				tr.insertBefore(n, src ? src.nextSibling : null);
+			});
+			tail.forEach((tr) => {
+				const first = tr.firstElementChild;
+				if (first && first.hasAttribute("colspan")) {
+					const n = parseInt(first.getAttribute("colspan"), 10);
+					if (!isNaN(n)) first.setAttribute("colspan", String(n + 1));
+				}
+			});
+		}
+		const collator = new Intl.Collator("zh");
+		const rows = dataRows.map((tr, i) => ({
+			tr,
+			i,
+			name: cellText(tr, iName)
+		})).sort((a, b) => collator.compare(a.name, b.name) || a.i - b.i);
+		const parent = dataRows[0].parentNode;
+		rows.forEach((r) => parent.appendChild(r.tr));
+		tail.forEach((tr) => parent.appendChild(tr));
+		const modelLabels = captureRowModel(head.row, rows);
+		rows.forEach((r) => {
+			dropLegacyRowStyling(r.tr);
+			r.tr.classList.add("pku-row");
+			[...r.tr.children].forEach((td) => {
+				if (td.querySelector(".pku-cell")) return;
+				const box = document.createElement("span");
+				box.className = "pku-cell";
+				while (td.firstChild) box.appendChild(td.firstChild);
+				td.appendChild(box);
+			});
+		});
+		rows.forEach((r, n) => {
+			r.tr.classList.add(n % 2 ? "pku-r-odd" : "pku-r-even");
+			r.newName = n === 0 || rows[n - 1].name !== r.name;
+		});
+		const addFoldCell = (tr, tag) => {
+			const c = document.createElement(tag);
+			c.className = "pku-foldcell" + (fold ? "" : " pku-foldcell--empty");
+			tr.insertBefore(c, tr.firstChild);
+			return c;
+		};
+		addFoldCell(head.row, "th");
+		rows.forEach((r) => addFoldCell(r.tr, "td"));
+		tail.forEach((tr) => {
+			const first = tr.firstElementChild;
+			if (first && first.hasAttribute("colspan")) {
+				const n = parseInt(first.getAttribute("colspan"), 10);
+				if (!isNaN(n)) first.setAttribute("colspan", String(n + 1));
+			} else addFoldCell(tr, "td");
+		});
+		const nameCol = iName + 1;
+		[...grid.querySelectorAll("tr")].forEach((tr) => {
+			const cell = tr.children[nameCol];
+			if (cell && !cell.hasAttribute("colspan")) cell.classList.add("pku-col-name");
+		});
+		let paneFirst = -1, paneLast = -1, paneWidths = [], paneOrder = [];
+		const measured = measureColumns(head.row, rows);
+		collapseScrollColumns.last = null;
+		if (collapseScrollColumns(grid, head.row, rows, measured)) {
+			syncScrollPanes(grid);
+			const info = collapseScrollColumns.last;
+			if (info) ({first: paneFirst, last: paneLast, widths: paneWidths, order: paneOrder} = info);
+		}
+		const pane = collapseScrollColumns.last;
+		assignColumnWidths(grid, head.row, measured, pane);
+		onWidthChange(() => assignColumnWidths(grid, head.row, measured, pane));
+		const groups = [];
+		rows.forEach((r) => {
+			if (r.newName) groups.push({
+				leader: r,
+				rows: []
+			});
+			const g = groups[groups.length - 1];
+			if (r !== g.leader) g.rows.push(r);
+		});
+		let controls = 0;
+		groups.forEach((g, gi) => {
+			if (groupRules && gi > 0) g.leader.tr.classList.add("pku-group-start");
+			if (!fold || !g.rows.length) return;
+			const btn = foldButton();
+			g.button = btn;
+			g.leader.tr.firstElementChild.appendChild(btn.el);
+			btn.onToggle((folded) => {
+				g.leader.tr.classList.toggle("pku-f-name", folded);
+				lockCellHeights(g.leader.tr);
+				const live = g.rows.filter((r) => !r.hiddenByFilter);
+				if (folded) {
+					markFolded(g.leader, live);
+					animateRows(live, true);
+				} else animateRows(live, false, () => markFolded(g.leader, []));
+			});
+			controls++;
+		});
+		state.gridModel.set(grid, {
+			rows,
+			groups,
+			fold,
+			grid,
+			shape: {
+				iInfo,
+				iName,
+				colCount,
+				paneFirst,
+				paneLast,
+				paneWidths,
+				paneOrder,
+				labels: modelLabels
+			}
+		});
+		return controls;
+	}
+	var REFILTER_EVENT = "pku-refilter";
+	function refilter() {
+		document.querySelectorAll(".pku-toolbar").forEach((bar) => bar.dispatchEvent(new Event(REFILTER_EVENT)));
 	}
 	function setSearchPager(filtering, total) {
 		const s = pagerState;
@@ -1666,10 +1050,6 @@
 			const next = mk("step", chev("right", 1), fwd ? cur + 1 : null, "下一页");
 			const last = mk("edge", chev("right", 2), fwd ? pages - 1 : null, "最后一页");
 			bar.append(first, prev, info, next, last);
-			bar.addEventListener("click", (e) => {
-				const a = e.target.closest("a.pku-pg");
-				if (a && a.getAttribute("href")) rememberNav({ q: currentSearchQuery() });
-			});
 			let jump = null;
 			if (sel && opts.length > 1) {
 				jump = document.createElement("label");
@@ -1685,10 +1065,7 @@
 				});
 				pick.addEventListener("change", () => {
 					const href = hrefFor(Number(pick.value));
-					if (href) {
-						rememberNav({ q: currentSearchQuery() });
-						location.assign(href);
-					}
+					if (href) location.assign(href);
 				});
 				jump.appendChild(pick);
 				bar.appendChild(jump);
@@ -1711,7 +1088,7 @@
 				pagerState.searchPage = fn(pagerState.searchPage);
 				const npages = Math.max(1, Math.ceil(pagerState.searchTotal / 20));
 				pagerState.searchPage = Math.max(0, Math.min(npages - 1, pagerState.searchPage));
-				document.querySelectorAll(".pku-toolbar").forEach((b) => b.dispatchEvent(new Event("pku-refilter")));
+				refilter();
 			};
 			first.addEventListener("click", navTo(() => 0));
 			prev.addEventListener("click", navTo((p) => p - 1));
@@ -1729,57 +1106,202 @@
 		});
 		return built;
 	}
-	var STYLES = [
-		Root,
-		Title,
-		NavMenu,
-		PageHero,
-		Noticies,
-		SectionHeads,
-		Toolbar,
-		CourseQuery,
-		FilterToggle,
-		Cache,
-		Chevron,
-		FilterPanel,
-		Footer,
-		Pager,
-		Grid,
-		Warnings,
-		Fold,
-		Timetable
-	].join("\n");
-	GM_addStyle(STYLES);
-	var NAV = [
-		{
-			label: "选课计划",
-			match: (u) => /electivePlan|courseQuery/.test(u)
-		},
-		{
-			label: "选课结果",
-			match: (u) => /showResults/.test(u)
-		},
-		{
-			label: "预选",
-			match: (u) => /electiveWork/.test(u)
-		},
-		{
-			label: "补退选",
-			match: (u) => /SupplyCancel/.test(u)
-		},
-		{
-			label: "补选",
-			match: (u) => /SupplyOnly/.test(u)
-		},
-		{
-			label: "帮助",
-			match: (u) => /HelpController/.test(u)
-		},
-		{
-			label: "退出",
-			match: (u) => /logout/.test(u)
+	var PAGE_CACHE = {
+		pages: [],
+		done: 0,
+		total: 0,
+		rows: []
+	};
+	var PAGER_SNAPSHOT = null;
+	function snapshotPager() {
+		const sel = document.querySelector("select[name=\"netui_row\"]");
+		if (!sel || sel.options.length < 2) return;
+		PAGER_SNAPSHOT = {
+			opts: [...sel.options],
+			cur: Math.max(0, sel.selectedIndex)
+		};
+	}
+	function pagerPages() {
+		return PAGER_SNAPSHOT;
+	}
+	function pageUrl(opts, i) {
+		const url = new URL(location.href);
+		const value = opts[i].value;
+		const grid = value.split(";")[0];
+		url.searchParams.set("netui_row", value);
+		const size = new URLSearchParams(location.search).get("netui_pagesize");
+		if (size) url.searchParams.set("netui_pagesize", size);
+		else if (opts.length > 1) {
+			const step = Math.abs(parseInt(opts[1].value.split(";")[1], 10) - parseInt(opts[0].value.split(";")[1], 10));
+			if (step > 0) url.searchParams.set("netui_pagesize", grid + ";" + step);
 		}
-	];
+		return url.toString();
+	}
+	function cacheViewKey() {
+		const url = new URL(location.href);
+		url.searchParams.delete("netui_row");
+		return url.pathname + url.search;
+	}
+	function persistPageCache(total, pages) {
+		try {
+			sessionStorage.setItem(CACHE_STORE_KEY, JSON.stringify({
+				view: cacheViewKey(),
+				total,
+				pages
+			}));
+		} catch (e) {}
+	}
+	function restorePageCache(grid, cur) {
+		let stored;
+		try {
+			stored = JSON.parse(sessionStorage.getItem("pku-elective-page-cache") || "null");
+		} catch (e) {
+			return false;
+		}
+		if (!stored || stored.view !== cacheViewKey()) return false;
+		const model = state.gridModel.get(grid);
+		if (!model) return false;
+		const body = model.rows.length ? model.rows[0].tr.parentNode : grid.tBodies[0];
+		if (!body) return false;
+		Object.entries(stored.pages || {}).forEach(([i, htmls]) => {
+			if (Number(i) === cur) return;
+			(htmls || []).forEach((html) => {
+				const tmp = document.createElement("tbody");
+				tmp.innerHTML = html;
+				const tr = tmp.firstElementChild;
+				if (!tr) return;
+				const rec = adoptForeignRow(tr, model, Number(i));
+				if (rec) {
+					body.appendChild(tr);
+					model.rows.push(rec);
+					PAGE_CACHE.rows.push(rec);
+				}
+			});
+		});
+		return true;
+	}
+	async function buildPageCache(grid, onProgress) {
+		const info = pagerPages();
+		if (!info) return false;
+		const { opts, cur } = info;
+		if (restorePageCache(grid, cur)) {
+			PAGE_CACHE.total = opts.length;
+			PAGE_CACHE.done = opts.length;
+			PAGE_CACHE.pages = opts.map(() => true);
+			onProgress(PAGE_CACHE);
+			return true;
+		}
+		PAGE_CACHE.total = opts.length;
+		PAGE_CACHE.done = 1;
+		PAGE_CACHE.pages = opts.map((_, i) => i === cur);
+		onProgress(PAGE_CACHE);
+		const store = {};
+		for (let i = 0; i < opts.length; i++) {
+			await new Promise((r) => setTimeout(r, 300 + (Math.random() * 100 - 50)));
+			try {
+				const res = await fetch(pageUrl(opts, i), { credentials: "same-origin" });
+				if (!res.ok) throw new Error("HTTP " + res.status);
+				const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+				store[i] = readPageRows(doc, grid);
+				if (i !== cur) adoptPage(grid, doc, i);
+				PAGE_CACHE.pages[i] = true;
+			} catch (e) {
+				console.warn("[Beautiful PKU Elective] page", i + 1, "not cached:", e.message);
+				PAGE_CACHE.pages[i] = "error";
+			}
+			PAGE_CACHE.done++;
+			onProgress(PAGE_CACHE);
+		}
+		persistPageCache(opts.length, store);
+		return true;
+	}
+	function readPageRows(doc, grid) {
+		const model = state.gridModel.get(grid);
+		const src = doc.querySelector("table.datagrid");
+		if (!model || !src) return [];
+		return [...src.rows].filter((tr) => !tr.querySelector("th") && tr.children.length >= model.shape.colCount).map((tr) => tr.outerHTML);
+	}
+	function adoptPage(grid, doc, pageIndex) {
+		const model = state.gridModel.get(grid);
+		if (!model) return;
+		const src = doc.querySelector("table.datagrid");
+		if (!src) return;
+		const rows = [...src.rows].filter((tr) => !tr.querySelector("th") && tr.children.length >= model.shape.colCount);
+		const body = model.rows.length ? model.rows[0].tr.parentNode : grid.tBodies[0];
+		if (!body) return;
+		rows.forEach((srcRow) => {
+			const tr = document.importNode(srcRow, true);
+			const rec = adoptForeignRow(tr, model, pageIndex);
+			if (rec) {
+				body.appendChild(tr);
+				model.rows.push(rec);
+				PAGE_CACHE.rows.push(rec);
+			}
+		});
+	}
+	function adoptForeignRow(tr, model, pageIndex) {
+		const { iInfo, paneFirst, paneLast, paneWidths, paneOrder } = model.shape;
+		dropLegacyRowStyling(tr);
+		tr.classList.add("pku-row", "pku-foreign");
+		tr.dataset.pkuPage = String(pageIndex + 1);
+		if (iInfo >= 0 && tr.children[iInfo]) {
+			const src = tr.children[iInfo];
+			const parts = parseInfoCell(src);
+			src.innerHTML = parts.time;
+			const n = document.createElement("td");
+			n.className = "datagrid";
+			n.textContent = parts.note;
+			tr.insertBefore(n, src.nextSibling);
+		}
+		const rec = {
+			tr,
+			i: model.rows.length,
+			foreign: true,
+			page: pageIndex + 1
+		};
+		captureRowValues(model.shape.labels, rec);
+		[...tr.children].forEach((td) => {
+			if (td.querySelector(".pku-cell")) return;
+			const box = document.createElement("span");
+			box.className = "pku-cell";
+			while (td.firstChild) box.appendChild(td.firstChild);
+			td.appendChild(box);
+		});
+		const gutter = document.createElement("td");
+		gutter.className = "pku-foldcell" + (model.fold ? "" : " pku-foldcell--empty");
+		tr.insertBefore(gutter, tr.firstChild);
+		if (paneFirst >= 0 && paneLast >= paneFirst) {
+			const group = [...tr.children].slice(paneFirst, paneLast + 1);
+			if (group.length) {
+				group.forEach((c) => {
+					c.style.removeProperty("width");
+					c.removeAttribute("width");
+				});
+				const host = document.createElement("td");
+				host.className = "pku-scrollcell";
+				const pane = document.createElement("div");
+				pane.className = "pku-hscroll";
+				const inner = document.createElement("table");
+				inner.className = "pku-inner";
+				const cg = document.createElement("colgroup");
+				paneWidths.forEach((w) => {
+					const col = document.createElement("col");
+					col.style.width = w;
+					cg.appendChild(col);
+				});
+				const irow = document.createElement("tr");
+				(paneOrder && paneOrder.length ? paneOrder.map((k) => group[k]) : group).forEach((c) => irow.appendChild(c));
+				inner.append(cg, irow);
+				pane.appendChild(inner);
+				host.appendChild(pane);
+				tr.insertBefore(host, tr.children[paneFirst] || null);
+			}
+		}
+		const nameCol = model.shape.iName + 1;
+		const cell = tr.children[nameCol];
+		if (cell && !cell.hasAttribute("colspan")) cell.classList.add("pku-col-name");
+		return rec;
+	}
 	function buildHeader() {
 		const menu = document.querySelector("#menu");
 		if (menu) {
@@ -1790,8 +1312,7 @@
 		document.querySelectorAll("#menu a").forEach((a) => {
 			linkMap[a.textContent.replace(/\s+/g, "").trim()] = a.getAttribute("href");
 		});
-		const url = location.pathname + location.search;
-		const active = NAV.find((n) => n.match(url)) || null;
+		const active = activeNav();
 		const header = document.createElement("header");
 		header.className = "pku-header";
 		const titlebar = document.createElement("div");
@@ -1876,7 +1397,7 @@
 			const isSuccess = /success\.gif/.test(src);
 			const content = [...row.children].find((td) => !td.querySelector("img"));
 			if (!content) return;
-			const text = content.textContent.replace(/[\s ]+/g, "").trim();
+			const text = content.textContent.replace(/[\s ]+/g, "").trim();
 			if (text && seenText.has(text)) {
 				const outer = row.closest("table")?.closest("tr");
 				if (outer) outers.add(outer);
@@ -1892,10 +1413,10 @@
 				b.innerHTML = el.innerHTML;
 				el.replaceWith(b);
 			});
-			if (isError && LAST_OP_COURSE) {
+			if (isError && state.lastOpCourse) {
 				const name = document.createElement("span");
 				name.className = "pku-notice-course";
-				name.textContent = "（" + LAST_OP_COURSE + "）";
+				name.textContent = "（" + state.lastOpCourse + "）";
 				card.appendChild(name);
 			}
 			cards.push(card);
@@ -1905,6 +1426,152 @@
 		});
 		outers.forEach((tr) => tr.remove());
 		return cards;
+	}
+	function removeNoteLine() {
+		[...document.querySelectorAll("span.pkuportal-remark, font.pkuportal-remark")].forEach((el) => {
+			if (/^注[：:]/.test(el.textContent.replace(/\s+/g, "").trim())) {
+				const row = el.closest("tr");
+				if (row) row.remove();
+			}
+		});
+	}
+	function buildFooter() {
+		const cells = [...document.querySelectorAll("td")].filter((td) => td.textContent.includes("版权所有"));
+		if (!cells.length) return 0;
+		const bar = document.createElement("div");
+		bar.className = "pku-footer";
+		bar.append(document.createTextNode("版权所有©北京大学计算中心 "));
+		const mail = document.createElement("a");
+		mail.href = "mailto:" + FOOTER_MAIL;
+		mail.textContent = FOOTER_MAIL;
+		bar.appendChild(mail);
+		const host = cells[0].closest("table") || cells[0];
+		host.parentNode.insertBefore(bar, host);
+		cells.forEach((td) => {
+			const t = td.closest("table");
+			(t && t !== host ? t : td).remove();
+		});
+		if (host.isConnected) host.remove();
+		return 1;
+	}
+	function rowMatches(r, state, taken) {
+		if (state.q) {
+			if (!state.q.split(/\s+/).filter(Boolean).every((t) => r.q.includes(t))) return false;
+		}
+		for (const [key, chosen] of Object.entries(state.facets)) {
+			if (!chosen.length) continue;
+			if (key === "状态") for (const group of STATUS_GROUPS) {
+				const picked = group.filter((opt) => chosen.includes(opt));
+				if (!picked.length) continue;
+				if (!picked.some((opt) => statusMatches(r, opt, taken))) return false;
+			}
+			else if (!chosen.includes(r.facets[key])) return false;
+		}
+		return true;
+	}
+	function statusMatches(r, opt, taken) {
+		switch (opt) {
+			case "已满": return !!r.cap && r.cap.taken >= r.cap.limit;
+			case "未满": return !!r.cap && r.cap.taken < r.cap.limit;
+			case "冲突": return clashesWithTaken(r, taken);
+			case "不冲突": return !clashesWithTaken(r, taken);
+			default: return true;
+		}
+	}
+	function fmtCredit(n) {
+		return Number.isInteger(n) ? String(n) : n.toFixed(1);
+	}
+	function describeClash(r, taken) {
+		if (!taken.length || !r.slots.length) return "";
+		for (const a of r.slots) for (const b of taken) if (slotsClash(a, b)) {
+			const day = DAY_NAMES[a.day] || "?";
+			return a.parity + "周" + day + a.from + "~" + a.to + "节";
+		}
+		return "";
+	}
+	function clashesWithTaken(r, taken) {
+		if (!taken.length || !r.slots.length) return false;
+		return r.slots.some((a) => taken.some((b) => slotsClash(a, b)));
+	}
+	function takenCredits() {
+		const grids = [...document.querySelectorAll("table.datagrid")];
+		let sum = 0;
+		grids.slice(1).forEach((g) => {
+			const m = state.gridModel.get(g);
+			if (m) m.rows.forEach((r) => {
+				if (!r.foreign) sum += r.credit || 0;
+			});
+		});
+		return sum;
+	}
+	function takenSlots() {
+		const grids = [...document.querySelectorAll("table.datagrid")];
+		const out = [];
+		grids.slice(1).forEach((g) => {
+			const m = state.gridModel.get(g);
+			if (m) m.rows.forEach((r) => out.push(...r.slots));
+		});
+		return out;
+	}
+	function applyFilter(grid, state$1) {
+		const model = state.gridModel.get(grid);
+		if (!model) return 0;
+		const taken = takenSlots();
+		const committed = takenCredits();
+		const limit = state$1.creditLimit;
+		const filtering = state$1.q || Object.values(state$1.facets).some((v) => v.length);
+		const matching = [];
+		model.rows.forEach((r) => {
+			let ok = rowMatches(r, state$1, taken);
+			if (!filtering && r.foreign) ok = false;
+			if (ok) matching.push(r);
+			const clash = describeClash(r, taken);
+			r.clash = clash;
+			r.tr.classList.toggle("pku-clash", !!clash);
+			const over = !!limit && r.credit > 0 && committed + r.credit > limit;
+			r.overCredit = over;
+			r.tr.classList.toggle("pku-over-credit", over && !clash);
+			const why = [];
+			if (clash) why.push("时间冲突：" + clash);
+			if (over) why.push("学分超限：已选 " + fmtCredit(committed) + " + 本课 " + fmtCredit(r.credit) + " > " + fmtCredit(limit));
+			if (why.length) r.tr.title = why.join("\n");
+			else r.tr.removeAttribute("title");
+		});
+		const pageStart = pagerState.searchPage * 20;
+		const onPage = new Set(matching.slice(pageStart, pageStart + 20));
+		model.rows.forEach((r) => {
+			const visible = onPage.has(r);
+			r.hiddenByFilter = !visible;
+			r.tr.classList.toggle("pku-filtered-out", !visible);
+		});
+		model.rows.forEach((r) => {
+			if (r.hiddenByFilter) return;
+			clearTimeout(r._foldTimer);
+			r._foldTimer = null;
+			clearFold(r.tr);
+			r.tr.classList.remove("pku-hidden");
+		});
+		restripe(model);
+		return matching.length;
+	}
+	function restripe(model) {
+		const visible = model.rows.filter((r) => !r.hiddenByFilter);
+		let n = 0, prevName = null;
+		visible.forEach((r) => {
+			r.tr.classList.remove("pku-r-even", "pku-r-odd", "pku-group-start");
+			r.tr.classList.add(n % 2 ? "pku-r-odd" : "pku-r-even");
+			if (prevName !== null && r.name !== prevName) r.tr.classList.add("pku-group-start");
+			prevName = r.name;
+			n++;
+		});
+		if (!model.fold) return;
+		model.groups.forEach((g) => {
+			const vis = [g.leader, ...g.rows].filter((r) => !r.hiddenByFilter);
+			const btn = g.button;
+			if (!btn) return;
+			btn.el.style.visibility = vis.length > 1 ? "" : "hidden";
+			g.visible = vis;
+		});
 	}
 	function takePlanLinks() {
 		const img = document.querySelector("img[src*=\"attention.jpg\"]");
@@ -1916,41 +1583,10 @@
 		row.remove();
 		return links;
 	}
-	function removeNoteLine() {
-		[...document.querySelectorAll("span.pkuportal-remark, font.pkuportal-remark")].forEach((el) => {
-			if (/^注[：:]/.test(el.textContent.replace(/\s+/g, "").trim())) {
-				const row = el.closest("tr");
-				if (row) row.remove();
-			}
-		});
-	}
-	var FACETS = [
-		{
-			label: "课程类别",
-			column: "课程类别"
-		},
-		{
-			label: "学分",
-			column: "学分"
-		},
-		{
-			label: "开课学院",
-			column: "开课单位"
-		},
-		{
-			label: "状态",
-			options: [
-				"已满",
-				"未满",
-				"冲突",
-				"不冲突"
-			]
-		}
-	];
 	function columnValues(grid) {
 		const outerRows = [...grid.rows].filter((tr) => !tr.closest("table.pku-inner"));
 		const headRow = outerRows.find((tr) => tr.querySelector("th"));
-		const heads = headRow ? [...headRow.children].map((th) => th.textContent.replace(/[\s\u00a0]+/g, "").trim()) : [];
+		const heads = headRow ? [...headRow.children].map((th) => th.textContent.replace(/[\s ]+/g, "").trim()) : [];
 		const out = {};
 		FACETS.forEach(({ column }) => {
 			if (!column) return;
@@ -1964,7 +1600,7 @@
 				if (tr === headRow || tr.querySelector("th")) return;
 				const cell = tr.children[idx];
 				if (!cell) return;
-				const v = cell.textContent.replace(/[\s\u00a0]+/g, " ").trim();
+				const v = cell.textContent.replace(/[\s ]+/g, " ").trim();
 				if (v) seen.add(v);
 			});
 			out[column] = [...seen].sort((a, b) => {
@@ -1973,11 +1609,6 @@
 			});
 		});
 		return out;
-	}
-	function chevron() {
-		const c = document.createElement("span");
-		c.className = "pku-chev";
-		return c;
 	}
 	function buildToolbar(grid) {
 		const links = takePlanLinks();
@@ -2141,15 +1772,15 @@
 			};
 		};
 		const run = () => {
-			const state = readState();
-			const matching = applyFilter(grid, state);
-			const total = (GRID_MODEL.get(grid) || { rows: [] }).rows.length;
-			const filtering = state.q || Object.values(state.facets).some((v) => v.length);
+			const filterState = readState();
+			const matching = applyFilter(grid, filterState);
+			const total = (state.gridModel.get(grid) || { rows: [] }).rows.length;
+			const filtering = filterState.q || Object.values(filterState.facets).some((v) => v.length);
 			count.textContent = filtering ? matching + " / " + total : "";
 			setSearchPager(filtering, matching);
 			const committed = takenCredits();
-			ctally.textContent = "已选 " + fmtCredit(committed) + (state.creditLimit ? " / " + fmtCredit(state.creditLimit) : "");
-			ctally.classList.toggle("pku-climit-tally--over", !!state.creditLimit && committed > state.creditLimit);
+			ctally.textContent = "已选 " + fmtCredit(committed) + (filterState.creditLimit ? " / " + fmtCredit(filterState.creditLimit) : "");
+			ctally.classList.toggle("pku-climit-tally--over", !!filterState.creditLimit && committed > filterState.creditLimit);
 		};
 		bar.addEventListener("pku-refilter", run);
 		const paint = (st) => {
@@ -2173,7 +1804,6 @@
 		else cache.remove();
 		let typeTimer = 0;
 		input.addEventListener("input", () => {
-			clearPin();
 			clearTimeout(typeTimer);
 			pagerState.searchPage = 0;
 			typeTimer = setTimeout(run, 500);
@@ -2181,7 +1811,6 @@
 		input.addEventListener("keydown", (e) => {
 			if (e.key === "Enter") {
 				e.preventDefault();
-				clearPin();
 				clearTimeout(typeTimer);
 				pagerState.searchPage = 0;
 				run();
@@ -2195,13 +1824,11 @@
 		});
 		panel.addEventListener("change", (e) => {
 			if (e.target.type === "checkbox") {
-				clearPin();
 				pagerState.searchPage = 0;
 				run();
 			}
 		});
 		reset.addEventListener("click", () => {
-			clearPin();
 			input.value = "";
 			panel.querySelectorAll("input[type=\"checkbox\"]").forEach((cb) => {
 				cb.checked = false;
@@ -2213,969 +1840,6 @@
 		rule.className = "pku-toolbar-rule";
 		bar.appendChild(rule);
 		return bar;
-	}
-	var FOOTER_MAIL = "sermis@pku.edu.cn";
-	function buildFooter() {
-		const cells = [...document.querySelectorAll("td")].filter((td) => td.textContent.includes("版权所有"));
-		if (!cells.length) return 0;
-		const bar = document.createElement("div");
-		bar.className = "pku-footer";
-		bar.append(document.createTextNode("版权所有©北京大学计算中心 "));
-		const mail = document.createElement("a");
-		mail.href = "mailto:" + FOOTER_MAIL;
-		mail.textContent = FOOTER_MAIL;
-		bar.appendChild(mail);
-		const host = cells[0].closest("table") || cells[0];
-		host.parentNode.insertBefore(bar, host);
-		cells.forEach((td) => {
-			const t = td.closest("table");
-			(t && t !== host ? t : td).remove();
-		});
-		if (host.isConnected) host.remove();
-		return 1;
-	}
-	var GRID_MODEL = new WeakMap();
-	var PAGE_CACHE = {
-		pages: [],
-		done: 0,
-		total: 0,
-		rows: []
-	};
-	var PAGER_SNAPSHOT = null;
-	function snapshotPager() {
-		const sel = document.querySelector("select[name=\"netui_row\"]");
-		if (!sel || sel.options.length < 2) return;
-		PAGER_SNAPSHOT = {
-			opts: [...sel.options],
-			cur: Math.max(0, sel.selectedIndex)
-		};
-	}
-	function pagerPages() {
-		return PAGER_SNAPSHOT;
-	}
-	function pageUrl(opts, i) {
-		const url = new URL(location.href);
-		const value = opts[i].value;
-		const grid = value.split(";")[0];
-		url.searchParams.set("netui_row", value);
-		const size = new URLSearchParams(location.search).get("netui_pagesize");
-		if (size) url.searchParams.set("netui_pagesize", size);
-		else if (opts.length > 1) {
-			const step = Math.abs(parseInt(opts[1].value.split(";")[1], 10) - parseInt(opts[0].value.split(";")[1], 10));
-			if (step > 0) url.searchParams.set("netui_pagesize", grid + ";" + step);
-		}
-		return url.toString();
-	}
-	var CACHE_STORE_KEY = "pku-elective-page-cache";
-	function cacheViewKey() {
-		const url = new URL(location.href);
-		url.searchParams.delete("netui_row");
-		return url.pathname + url.search;
-	}
-	function persistPageCache(total, pages) {
-		try {
-			sessionStorage.setItem(CACHE_STORE_KEY, JSON.stringify({
-				view: cacheViewKey(),
-				total,
-				pages
-			}));
-		} catch (e) {}
-	}
-	function restorePageCache(grid, cur) {
-		let stored;
-		try {
-			stored = JSON.parse(sessionStorage.getItem(CACHE_STORE_KEY) || "null");
-		} catch (e) {
-			return false;
-		}
-		if (!stored || stored.view !== cacheViewKey()) return false;
-		const model = GRID_MODEL.get(grid);
-		if (!model) return false;
-		const body = model.rows.length ? model.rows[0].tr.parentNode : grid.tBodies[0];
-		if (!body) return false;
-		Object.entries(stored.pages || {}).forEach(([i, htmls]) => {
-			if (Number(i) === cur) return;
-			(htmls || []).forEach((html) => {
-				const tmp = document.createElement("tbody");
-				tmp.innerHTML = html;
-				const tr = tmp.firstElementChild;
-				if (!tr) return;
-				const rec = adoptForeignRow(tr, model, Number(i));
-				if (rec) {
-					body.appendChild(tr);
-					model.rows.push(rec);
-					PAGE_CACHE.rows.push(rec);
-				}
-			});
-		});
-		return true;
-	}
-	async function buildPageCache(grid, onProgress) {
-		const info = pagerPages();
-		if (!info) return false;
-		const { opts, cur } = info;
-		if (restorePageCache(grid, cur)) {
-			PAGE_CACHE.total = opts.length;
-			PAGE_CACHE.done = opts.length;
-			PAGE_CACHE.pages = opts.map(() => true);
-			onProgress(PAGE_CACHE);
-			return true;
-		}
-		PAGE_CACHE.total = opts.length;
-		PAGE_CACHE.done = 1;
-		PAGE_CACHE.pages = opts.map((_, i) => i === cur);
-		onProgress(PAGE_CACHE);
-		const store = {};
-		for (let i = 0; i < opts.length; i++) {
-			await new Promise((r) => setTimeout(r, 300 + (Math.random() * 100 - 50)));
-			try {
-				const res = await fetch(pageUrl(opts, i), { credentials: "same-origin" });
-				if (!res.ok) throw new Error("HTTP " + res.status);
-				const doc = new DOMParser().parseFromString(await res.text(), "text/html");
-				store[i] = readPageRows(doc, grid);
-				if (i !== cur) adoptPage(grid, doc, i);
-				PAGE_CACHE.pages[i] = true;
-			} catch (e) {
-				console.warn("[Beautiful PKU Elective] page", i + 1, "not cached:", e.message);
-				PAGE_CACHE.pages[i] = "error";
-			}
-			PAGE_CACHE.done++;
-			onProgress(PAGE_CACHE);
-		}
-		persistPageCache(opts.length, store);
-		return true;
-	}
-	function readPageRows(doc, grid) {
-		const model = GRID_MODEL.get(grid);
-		const src = doc.querySelector("table.datagrid");
-		if (!model || !src) return [];
-		return [...src.rows].filter((tr) => !tr.querySelector("th") && tr.children.length >= model.shape.colCount).map((tr) => tr.outerHTML);
-	}
-	function adoptPage(grid, doc, pageIndex) {
-		const model = GRID_MODEL.get(grid);
-		if (!model) return;
-		const src = doc.querySelector("table.datagrid");
-		if (!src) return;
-		const rows = [...src.rows].filter((tr) => !tr.querySelector("th") && tr.children.length >= model.shape.colCount);
-		const body = model.rows.length ? model.rows[0].tr.parentNode : grid.tBodies[0];
-		if (!body) return;
-		rows.forEach((srcRow) => {
-			const tr = document.importNode(srcRow, true);
-			const rec = adoptForeignRow(tr, model, pageIndex);
-			if (rec) {
-				body.appendChild(tr);
-				model.rows.push(rec);
-				PAGE_CACHE.rows.push(rec);
-			}
-		});
-	}
-	function adoptForeignRow(tr, model, pageIndex) {
-		const { iInfo, paneFirst, paneLast, paneWidths, paneOrder } = model.shape;
-		dropLegacyRowStyling(tr);
-		tr.classList.add("pku-row", "pku-foreign");
-		tr.dataset.pkuPage = String(pageIndex + 1);
-		if (iInfo >= 0 && tr.children[iInfo]) {
-			const src = tr.children[iInfo];
-			const parts = parseInfoCell(src);
-			src.innerHTML = parts.time;
-			const n = document.createElement("td");
-			n.className = "datagrid";
-			n.textContent = parts.note;
-			tr.insertBefore(n, src.nextSibling);
-		}
-		const rec = {
-			tr,
-			i: model.rows.length,
-			nat: model.rows.length,
-			foreign: true,
-			page: pageIndex + 1
-		};
-		captureRowValues(model.shape.labels, rec);
-		[...tr.children].forEach((td) => {
-			if (td.querySelector(".pku-cell")) return;
-			const box = document.createElement("span");
-			box.className = "pku-cell";
-			while (td.firstChild) box.appendChild(td.firstChild);
-			td.appendChild(box);
-		});
-		const gutter = document.createElement("td");
-		gutter.className = "pku-foldcell" + (model.fold ? "" : " pku-foldcell--empty");
-		tr.insertBefore(gutter, tr.firstChild);
-		if (paneFirst >= 0 && paneLast >= paneFirst) {
-			const group = [...tr.children].slice(paneFirst, paneLast + 1);
-			if (group.length) {
-				group.forEach((c) => {
-					c.style.removeProperty("width");
-					c.removeAttribute("width");
-				});
-				const host = document.createElement("td");
-				host.className = "pku-scrollcell";
-				const pane = document.createElement("div");
-				pane.className = "pku-hscroll";
-				const inner = document.createElement("table");
-				inner.className = "pku-inner";
-				const cg = document.createElement("colgroup");
-				paneWidths.forEach((w) => {
-					const col = document.createElement("col");
-					col.style.width = w;
-					cg.appendChild(col);
-				});
-				const irow = document.createElement("tr");
-				(paneOrder && paneOrder.length ? paneOrder.map((k) => group[k]) : group).forEach((c) => irow.appendChild(c));
-				inner.append(cg, irow);
-				pane.appendChild(inner);
-				host.appendChild(pane);
-				tr.insertBefore(host, tr.children[paneFirst] || null);
-			}
-		}
-		const nameCol = model.shape.iName + 1;
-		const cell = tr.children[nameCol];
-		if (cell && !cell.hasAttribute("colspan")) cell.classList.add("pku-col-name");
-		return rec;
-	}
-	function rowMatches(r, state, taken) {
-		if (state.q) {
-			if (!state.q.split(/\s+/).filter(Boolean).every((t) => r.q.includes(t))) return false;
-		}
-		for (const [key, chosen] of Object.entries(state.facets)) {
-			if (!chosen.length) continue;
-			if (key === "状态") for (const group of STATUS_GROUPS) {
-				const picked = group.filter((opt) => chosen.includes(opt));
-				if (!picked.length) continue;
-				if (!picked.some((opt) => statusMatches(r, opt, taken))) return false;
-			}
-			else if (!chosen.includes(r.facets[key])) return false;
-		}
-		return true;
-	}
-	var STATUS_GROUPS = [["已满", "未满"], ["冲突", "不冲突"]];
-	function statusMatches(r, opt, taken) {
-		switch (opt) {
-			case "已满": return !!r.cap && r.cap.taken >= r.cap.limit;
-			case "未满": return !!r.cap && r.cap.taken < r.cap.limit;
-			case "冲突": return clashesWithTaken(r, taken);
-			case "不冲突": return !clashesWithTaken(r, taken);
-			default: return true;
-		}
-	}
-	var DAY_NAMES = [
-		"一",
-		"二",
-		"三",
-		"四",
-		"五",
-		"六",
-		"日"
-	];
-	function fmtCredit(n) {
-		return Number.isInteger(n) ? String(n) : n.toFixed(1);
-	}
-	function describeClash(r, taken) {
-		if (!taken.length || !r.slots.length) return "";
-		for (const a of r.slots) for (const b of taken) if (slotsClash(a, b)) {
-			const day = DAY_NAMES[a.day] || "?";
-			return a.parity + "周" + day + a.from + "~" + a.to + "节";
-		}
-		return "";
-	}
-	function clashesWithTaken(r, taken) {
-		if (!taken.length || !r.slots.length) return false;
-		return r.slots.some((a) => taken.some((b) => slotsClash(a, b)));
-	}
-	function takenCredits() {
-		const grids = [...document.querySelectorAll("table.datagrid")];
-		let sum = 0;
-		grids.slice(1).forEach((g) => {
-			const m = GRID_MODEL.get(g);
-			if (m) m.rows.forEach((r) => {
-				if (!r.foreign) sum += r.credit || 0;
-			});
-		});
-		return sum;
-	}
-	function takenSlots() {
-		const grids = [...document.querySelectorAll("table.datagrid")];
-		const out = [];
-		grids.slice(1).forEach((g) => {
-			const m = GRID_MODEL.get(g);
-			if (m) m.rows.forEach((r) => out.push(...r.slots));
-		});
-		return out;
-	}
-	function applyFilter(grid, state) {
-		const model = GRID_MODEL.get(grid);
-		if (!model) return 0;
-		const taken = takenSlots();
-		const committed = takenCredits();
-		const limit = state.creditLimit;
-		const filtering = state.q || Object.values(state.facets).some((v) => v.length);
-		const matching = [];
-		model.rows.forEach((r) => {
-			let ok = rowMatches(r, state, taken);
-			if (!filtering && r.foreign) ok = false;
-			if (ok) matching.push(r);
-			const clash = describeClash(r, taken);
-			r.clash = clash;
-			r.tr.classList.toggle("pku-clash", !!clash);
-			const over = !!limit && r.credit > 0 && committed + r.credit > limit;
-			r.overCredit = over;
-			r.tr.classList.toggle("pku-over-credit", over && !clash);
-			const why = [];
-			if (clash) why.push("时间冲突：" + clash);
-			if (over) why.push("学分超限：已选 " + fmtCredit(committed) + " + 本课 " + fmtCredit(r.credit) + " > " + fmtCredit(limit));
-			if (why.length) r.tr.title = why.join("\n");
-			else r.tr.removeAttribute("title");
-		});
-		const pageStart = pagerState.searchPage * 20;
-		const onPage = new Set(matching.slice(pageStart, pageStart + 20));
-		model.rows.forEach((r) => {
-			const visible = onPage.has(r);
-			r.hiddenByFilter = !visible;
-			r.tr.classList.toggle("pku-filtered-out", !visible);
-		});
-		model.rows.forEach((r) => {
-			if (r.hiddenByFilter) return;
-			clearTimeout(r._foldTimer);
-			r._foldTimer = null;
-			clearFold(r.tr);
-			r.tr.classList.remove("pku-hidden");
-		});
-		restripe(model);
-		return matching.length;
-	}
-	function restripe(model) {
-		const visible = model.rows.filter((r) => !r.hiddenByFilter);
-		let n = 0, prevName = null;
-		visible.forEach((r) => {
-			r.tr.classList.remove("pku-r-even", "pku-r-odd", "pku-group-start");
-			r.tr.classList.add(n % 2 ? "pku-r-odd" : "pku-r-even");
-			if (prevName !== null && r.name !== prevName) r.tr.classList.add("pku-group-start");
-			prevName = r.name;
-			n++;
-		});
-		if (!model.fold) return;
-		model.groups.forEach((g) => {
-			const vis = [g.leader, ...g.rows].filter((r) => !r.hiddenByFilter);
-			const btn = g.button;
-			if (!btn) return;
-			btn.el.style.visibility = vis.length > 1 ? "" : "hidden";
-			g.visible = vis;
-		});
-	}
-	function enhanceGrid(grid, opts) {
-		const { fold = false, groupRules = false } = opts || {};
-		const head = headerCells(grid);
-		console.log("enchance grid");
-		console.log(head.row);
-		console.log("------------");
-		if (!head) return 0;
-		head.row.classList.add("pku-head-row");
-		grid.querySelectorAll("tr.datagrid-footer").forEach((tr) => {
-			tr.classList.remove("datagrid-footer");
-		});
-		const labels = head.cells.map(headText);
-		const iName = findCol(labels, COL.name);
-		const iInfo = findCol(labels, COL.info);
-		if (iName < 0) return 0;
-		const colCount = head.cells.length;
-		const dataRows = [...grid.querySelectorAll("tr")].filter((tr) => !tr.querySelector("th") && tr.children.length >= colCount);
-		if (!dataRows.length) return 0;
-		const tail = [...grid.querySelectorAll("tr")].filter((tr) => tr !== head.row && !dataRows.includes(tr));
-		if (iInfo >= 0) {
-			const noteTh = document.createElement("th");
-			noteTh.className = "datagrid";
-			noteTh.textContent = NOTE_HEAD;
-			head.row.insertBefore(noteTh, head.cells[iInfo].nextSibling);
-			dataRows.forEach((tr) => {
-				const src = tr.children[iInfo];
-				const parts = parseInfoCell(src);
-				if (src) src.innerHTML = parts.time;
-				const n = document.createElement("td");
-				n.className = "datagrid";
-				n.textContent = parts.note;
-				tr.insertBefore(n, src ? src.nextSibling : null);
-			});
-			tail.forEach((tr) => {
-				const first = tr.firstElementChild;
-				if (first && first.hasAttribute("colspan")) {
-					const n = parseInt(first.getAttribute("colspan"), 10);
-					if (!isNaN(n)) first.setAttribute("colspan", String(n + 1));
-				}
-			});
-		}
-		const collator = new Intl.Collator("zh");
-		const rows = dataRows.map((tr, i) => ({
-			tr,
-			i,
-			name: cellText(tr, iName)
-		})).sort((a, b) => collator.compare(a.name, b.name) || a.i - b.i);
-		const parent = dataRows[0].parentNode;
-		rows.forEach((r) => parent.appendChild(r.tr));
-		tail.forEach((tr) => parent.appendChild(tr));
-		const modelLabels = captureRowModel(head.row, rows);
-		rows.forEach((r) => {
-			dropLegacyRowStyling(r.tr);
-			r.tr.classList.add("pku-row");
-			[...r.tr.children].forEach((td) => {
-				if (td.querySelector(".pku-cell")) return;
-				const box = document.createElement("span");
-				box.className = "pku-cell";
-				while (td.firstChild) box.appendChild(td.firstChild);
-				td.appendChild(box);
-			});
-		});
-		rows.forEach((r, n) => {
-			r.nat = n;
-			r.tr.classList.add(n % 2 ? "pku-r-odd" : "pku-r-even");
-			r.newName = n === 0 || rows[n - 1].name !== r.name;
-		});
-		const addFoldCell = (tr, tag) => {
-			const c = document.createElement(tag);
-			c.className = "pku-foldcell" + (fold ? "" : " pku-foldcell--empty");
-			tr.insertBefore(c, tr.firstChild);
-			return c;
-		};
-		addFoldCell(head.row, "th");
-		rows.forEach((r) => addFoldCell(r.tr, "td"));
-		tail.forEach((tr) => {
-			const first = tr.firstElementChild;
-			if (first && first.hasAttribute("colspan")) {
-				const n = parseInt(first.getAttribute("colspan"), 10);
-				if (!isNaN(n)) first.setAttribute("colspan", String(n + 1));
-			} else addFoldCell(tr, "td");
-		});
-		const nameCol = iName + 1;
-		[...grid.querySelectorAll("tr")].forEach((tr) => {
-			const cell = tr.children[nameCol];
-			if (cell && !cell.hasAttribute("colspan")) cell.classList.add("pku-col-name");
-		});
-		let paneFirst = -1, paneLast = -1, paneWidths = [], paneOrder = [];
-		const measured = measureColumns(head.row, rows);
-		collapseScrollColumns.last = null;
-		if (collapseScrollColumns(grid, head.row, rows, measured)) {
-			syncScrollPanes(grid);
-			const info = collapseScrollColumns.last;
-			if (info) ({first: paneFirst, last: paneLast, widths: paneWidths, order: paneOrder} = info);
-		}
-		const pane = collapseScrollColumns.last;
-		assignColumnWidths(grid, head.row, measured, pane);
-		onWidthChange(() => assignColumnWidths(grid, head.row, measured, pane));
-		const groups = [];
-		rows.forEach((r) => {
-			if (r.newName) groups.push({
-				leader: r,
-				rows: []
-			});
-			const g = groups[groups.length - 1];
-			if (r !== g.leader) g.rows.push(r);
-		});
-		let controls = 0;
-		groups.forEach((g, gi) => {
-			if (groupRules && gi > 0) g.leader.tr.classList.add("pku-group-start");
-			if (!fold || !g.rows.length) return;
-			const btn = foldButton();
-			g.button = btn;
-			g.leader.tr.firstElementChild.appendChild(btn.el);
-			btn.onToggle((folded) => {
-				g.leader.tr.classList.toggle("pku-f-name", folded);
-				lockCellHeights(g.leader.tr);
-				const live = g.rows.filter((r) => !r.hiddenByFilter);
-				if (folded) {
-					markFolded(g.leader, live);
-					animateRows(live, true);
-				} else animateRows(live, false, () => markFolded(g.leader, []));
-			});
-			controls++;
-		});
-		GRID_MODEL.set(grid, {
-			rows,
-			groups,
-			fold,
-			grid,
-			shape: {
-				iInfo,
-				iName,
-				colCount,
-				paneFirst,
-				paneLast,
-				paneWidths,
-				paneOrder,
-				labels: modelLabels
-			}
-		});
-		return controls;
-	}
-	function textEm(str) {
-		let em = 0;
-		for (const ch of str) em += /[\u2e80-\uffef]/.test(ch) ? 1 : .55;
-		return em;
-	}
-	var SCROLL_COLS = [
-		"年级",
-		"开课年级",
-		"上课/考试信息",
-		"上课时间",
-		"教室信息",
-		"考试时间",
-		"备注",
-		"自选P/NP"
-	];
-	var SCROLL_COL_EM = {
-		"年级": 5,
-		"开课年级": 6,
-		"上课/考试信息": 24,
-		"上课时间": 24,
-		"教室信息": 24,
-		"考试时间": 13,
-		"备注": 22,
-		"自选P/NP": 6
-	};
-	var SCROLL_ORDER = [
-		"上课/考试信息",
-		"上课时间",
-		"教室信息",
-		"考试时间",
-		"备注",
-		"年级",
-		"开课年级",
-		"自选P/NP"
-	];
-	function collapseScrollColumns(grid, headRow, bodyRows, measured) {
-		const labels = [...headRow.children].map(headText);
-		const wanted = labels.map((l) => SCROLL_COLS.includes(l));
-		let best = {
-			start: -1,
-			len: 0
-		}, run = 0;
-		wanted.forEach((w, i) => {
-			run = w ? run + 1 : 0;
-			if (run > best.len) best = {
-				start: i - run + 1,
-				len: run
-			};
-		});
-		if (best.len < 2) return false;
-		const first = best.start, last = best.start + best.len - 1;
-		const span = last - first + 1;
-		const paneLabels = labels.slice(first, last + 1);
-		const rankOf = (l) => {
-			const i = SCROLL_ORDER.indexOf(l);
-			return i < 0 ? SCROLL_ORDER.length : i;
-		};
-		const order = paneLabels.map((_, k) => k).sort((a, b) => rankOf(paneLabels[a]) - rankOf(paneLabels[b]) || a - b);
-		const paneEm = order.map((k) => {
-			const l = paneLabels[k];
-			const m = measured && measured[first + k];
-			const w = m ? m.w : SCROLL_COL_EM[l] || 8;
-			return COL.note && COL.note.includes(l) ? w * COL_NOTE_K : w;
-		});
-		const widths = paneEm.map((w) => w.toFixed(2) + "em");
-		const convert = (row, tag) => {
-			const group = [...row.children].slice(first, last + 1);
-			if (!group.length) return;
-			const ordered = order.map((k) => group[k]);
-			ordered.forEach((cell, i) => {
-				cell.style.removeProperty("width");
-				cell.removeAttribute("width");
-				if (COL.info.includes(paneLabels[order[i]])) cell.classList.add("pku-info-cell");
-			});
-			const host = document.createElement(tag);
-			host.className = "pku-scrollcell";
-			const pane = document.createElement("div");
-			pane.className = "pku-hscroll";
-			const inner = document.createElement("table");
-			inner.className = "pku-inner";
-			const cg = document.createElement("colgroup");
-			widths.forEach((w) => {
-				const col = document.createElement("col");
-				col.style.width = w;
-				cg.appendChild(col);
-			});
-			const tr = document.createElement("tr");
-			ordered.forEach((cell) => tr.appendChild(cell));
-			inner.append(cg, tr);
-			pane.appendChild(inner);
-			host.appendChild(pane);
-			row.insertBefore(host, row.children[first] || null);
-		};
-		convert(headRow, "th");
-		bodyRows.forEach((r) => convert(r.tr, "td"));
-		collapseScrollColumns.last = {
-			first,
-			last,
-			widths,
-			order,
-			em: paneEm.slice(),
-			base: paneEm.slice(),
-			at: first,
-			span,
-			w: paneEm.reduce((a, b) => a + b, 0),
-			floor: paneEm[0] || 8
-		};
-		return true;
-	}
-	function syncScrollPanes(grid) {
-		const panes = [...grid.querySelectorAll(".pku-hscroll")];
-		if (panes.length < 2) return;
-		let syncing = false;
-		const spread = (x) => {
-			syncing = true;
-			panes.forEach((p) => {
-				if (Math.round(p.scrollLeft) !== Math.round(x)) p.scrollLeft = x;
-			});
-			requestAnimationFrame(() => {
-				syncing = false;
-			});
-		};
-		panes.forEach((pane) => {
-			pane.addEventListener("scroll", () => {
-				if (!syncing) spread(pane.scrollLeft);
-			});
-			pane.addEventListener("wheel", (e) => {
-				if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
-				const max = pane.scrollWidth - pane.clientWidth;
-				if (max <= 0) return;
-				const next = Math.max(0, Math.min(max, pane.scrollLeft + e.deltaX));
-				if (next !== pane.scrollLeft) {
-					e.preventDefault();
-					pane.scrollLeft = next;
-					spread(next);
-				}
-			}, { passive: false });
-		});
-	}
-	var WIDTH_WATCH = [];
-	function onWidthChange(fn) {
-		if (!WIDTH_WATCH.length) {
-			let last = innerWidth, timer = 0;
-			addEventListener("resize", () => {
-				if (innerWidth === last) return;
-				last = innerWidth;
-				clearTimeout(timer);
-				timer = setTimeout(() => WIDTH_WATCH.forEach((f) => {
-					try {
-						f();
-					} catch (e) {}
-				}), 120);
-			});
-		}
-		WIDTH_WATCH.push(fn);
-	}
-	var COL_KEEP = .85;
-	var COL_WIDE = .2;
-	var COL_NARROW = .05;
-	var COL_WIDE_K = .65;
-	var COL_HEAD_K = 1.5;
-	var COL_NOTE_K = .5;
-	var COL_HOLD = { "课程号": 3 };
-	var SHORT_FIELD_MULTIPLY = 5;
-	var COL_CODES = ["课程号", "课程班号"];
-	function cellEm(td) {
-		if (!td) return 0;
-		let best = 0;
-		(td.innerHTML || "").split(/<br\s*\/?>/i).forEach((frag) => {
-			const box = document.createElement("div");
-			box.innerHTML = frag;
-			const t = box.textContent.replace(/\s+/g, " ").trim();
-			if (t) best = Math.max(best, textEm(t));
-		});
-		return best;
-	}
-	function cellLineText(td) {
-		if (!td) return "";
-		let best = "";
-		(td.innerHTML || "").split(/<br\s*\/?>/i).forEach((frag) => {
-			const box = document.createElement("div");
-			box.innerHTML = frag;
-			const t = box.textContent.replace(/\s+/g, " ").trim();
-			if (t.length > best.length) best = t;
-		});
-		return best;
-	}
-	function columnTarget(label, texts) {
-		if (COL_CODES.includes(label)) return 1;
-		if (texts.length && texts.every((t) => /^[\d./\s]+$/.test(t))) return 1;
-		if (texts.reduce((m, t) => Math.max(m, t.length), 0) <= 4) return 1;
-		return 2;
-	}
-	function keepEm(vals) {
-		if (!vals.length) return 0;
-		const v = vals.slice().sort((a, b) => a - b);
-		if (v.length < 5) return v[Math.max(0, v.length - 2)];
-		return v[Math.min(v.length - 1, Math.floor(COL_KEEP * v.length))];
-	}
-	function measureColumns(headRow, bodyRows) {
-		return [...headRow.children].map((th, c) => {
-			const gutter = th.classList.contains("pku-foldcell");
-			const label = gutter ? "" : headText(th);
-			const vals = [];
-			const texts = [];
-			bodyRows.forEach((r) => {
-				const td = r.tr ? r.tr.children[c] : r.children[c];
-				const e = cellEm(td);
-				if (e) vals.push(e);
-				const t = cellLineText(td);
-				if (t) texts.push(t);
-			});
-			return {
-				label,
-				gutter,
-				w: Math.max(keepEm(vals), textEm(label) * COL_HEAD_K),
-				target: columnTarget(label, texts)
-			};
-		});
-	}
-	function shrinkCols(cols, need) {
-		for (let pass = 0; pass < 24 && need > .01; pass++) {
-			const live = cols.filter((c) => c.w > c.min + .01);
-			const pool = live.reduce((a, c) => a + c.w / (c.hold || 1), 0);
-			if (pool <= 0) break;
-			let took = 0;
-			live.forEach((c) => {
-				const cut = Math.min(need * (c.w / (c.hold || 1)) / pool, c.w - c.min);
-				c.w -= cut;
-				took += cut;
-			});
-			if (took <= .001) break;
-			need -= took;
-		}
-		return need;
-	}
-	function setPaneWidths(grid, pane) {
-		pane.em.forEach((w, k) => {
-			pane.widths[k] = w.toFixed(2) + "em";
-		});
-		grid.querySelectorAll("table.pku-inner > colgroup").forEach((cg) => {
-			[...cg.children].forEach((col, k) => {
-				if (pane.widths[k]) col.style.width = pane.widths[k];
-			});
-		});
-	}
-	function assignColumnWidths(grid, headRow, measured, pane) {
-		const cells = [...headRow.children];
-		const fs = parseFloat(getComputedStyle(grid).fontSize) || 13;
-		const padEm = 20 / fs;
-		const px = grid.getBoundingClientRect().width || grid.parentElement && grid.parentElement.clientWidth || 0;
-		if (!px || !measured) return;
-		if (pane && pane.base) {
-			pane.em = pane.base.slice();
-			pane.w = pane.base.reduce((a, b) => a + b, 0);
-		}
-		const cols = [];
-		cells.forEach((th, i) => {
-			if (th.classList.contains("pku-foldcell")) return;
-			if (th.classList.contains("pku-scrollcell")) cols.push({
-				th,
-				pane: true,
-				label: "",
-				w: pane.w,
-				hold: 1,
-				target: 2
-			});
-			else {
-				const m = measured[pane && i > pane.at ? i + pane.span - 1 : i];
-				cols.push({
-					th,
-					pane: false,
-					label: m ? m.label : "",
-					w: m ? m.w : 4,
-					hold: 1,
-					target: m ? m.target : 1
-				});
-			}
-		});
-		if (!cols.length) return;
-		const room = px / fs - cols.length * padEm;
-		if (room <= 0) return;
-		cols.forEach((c) => {
-			c.hold = COL_HOLD[c.label] || 1;
-			if (c.hold == 1 && c.w < COL_NARROW) c.hold = SHORT_FIELD_MULTIPLY;
-			const W = c.w;
-			if (c.w > COL_WIDE * room) {
-				c.w *= COL_WIDE_K;
-				c.reduced = true;
-			}
-			c.full = c.w;
-			c.min = W * 1.1 / (c.target || 1);
-		});
-		const paneCol = cols.find((c) => c.pane);
-		if (paneCol) paneCol.min = Math.min(paneCol.w, pane.floor);
-		let total = cols.reduce((a, c) => a + c.w, 0);
-		if (total <= room) {
-			const extra = room - total;
-			const pool = total || 1;
-			cols.forEach((c) => {
-				if (!c.pane) {
-					c.w += extra * (c.w / pool);
-					return;
-				}
-				pane.em = pane.em.map((w) => w + extra * (w / pool));
-				c.w = pane.em.reduce((a, b) => a + b, 0);
-			});
-			if (pane && pane.em) setPaneWidths(grid, pane);
-		} else {
-			let need = total - room;
-			if (paneCol) {
-				const cut = Math.min(need, paneCol.w - paneCol.min);
-				paneCol.w -= cut;
-				need -= cut;
-			}
-			need = shrinkCols(cols.filter((c) => !c.reduced && !c.pane), need);
-			if (need > .01) {
-				cols.forEach((c) => {
-					c.min = 1;
-				});
-				shrinkCols(cols, need);
-			}
-		}
-		const sum = cols.reduce((a, c) => a + c.w, 0) || 1;
-		cols.forEach((c) => {
-			c.th.removeAttribute("width");
-			c.th.style.setProperty("width", (c.w / sum * 100).toFixed(2) + "%", "important");
-		});
-		cells.forEach((th) => {
-			if (th.classList.contains("pku-dscrollcell")) return;
-			if (!th.querySelector(".pku-head")) {
-				const box = document.createElement("span");
-				box.className = "pku-head";
-				while (th.firstChild) box.appendChild(th.firstChild);
-				th.appendChild(box);
-			}
-		});
-	}
-	function lockCellHeights(tr) {
-		[...tr.children].forEach((td) => {
-			if (td.style.height) return;
-			td.style.height = td.getBoundingClientRect().height + "px";
-		});
-	}
-	function foldBox(td) {
-		return td.querySelector(":scope > .pku-cell, :scope > .pku-hscroll");
-	}
-	function armFold(tr) {
-		const h = tr.getBoundingClientRect().height;
-		const cells = [...tr.children].map((td) => {
-			const cs = getComputedStyle(td);
-			return {
-				box: foldBox(td),
-				pad: (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0)
-			};
-		});
-		const boxes = [];
-		cells.forEach((c) => {
-			if (!c.box) return;
-			boxes.push({
-				el: c.box,
-				h: Math.max(0, h - c.pad)
-			});
-		});
-		tr.classList.add("pku-fold");
-		boxes.forEach((b) => {
-			b.el.style.height = b.h + "px";
-		});
-		return boxes;
-	}
-	function clearFold(tr) {
-		tr.classList.remove("pku-fold", "pku-fold--anim", "pku-fold--shut");
-		[...tr.children].forEach((td) => {
-			const box = foldBox(td);
-			if (box) box.style.removeProperty("height");
-		});
-	}
-	function animateRows(rows, folded, onDone) {
-		if (!rows.length) {
-			if (onDone) onDone();
-			return;
-		}
-		rows.forEach((r) => {
-			clearTimeout(r._foldTimer);
-			r._foldTimer = null;
-		});
-		rows.forEach((r) => {
-			clearFold(r.tr);
-			r.tr.classList.remove("pku-hidden");
-		});
-		const armed = rows.map((r) => armFold(r.tr));
-		if (!folded) {
-			rows.forEach((r) => r.tr.classList.add("pku-fold--shut"));
-			armed.forEach((boxes) => boxes.forEach((b) => {
-				b.el.style.height = "0px";
-			}));
-		}
-		rows[0].tr.getBoundingClientRect().height;
-		requestAnimationFrame(() => {
-			rows.forEach((r) => {
-				r.tr.classList.add("pku-fold--anim");
-				r.tr.classList.toggle("pku-fold--shut", folded);
-			});
-			armed.forEach((boxes) => boxes.forEach((b) => {
-				b.el.style.height = folded ? "0px" : b.h + "px";
-			}));
-			const timer = setTimeout(() => {
-				rows.forEach((r) => {
-					if (folded) r.tr.classList.add("pku-hidden");
-					clearFold(r.tr);
-					r._foldTimer = null;
-				});
-				if (onDone) onDone();
-			}, 270);
-			rows.forEach((r) => {
-				r._foldTimer = timer;
-			});
-		});
-	}
-	function foldButton() {
-		const el = document.createElement("button");
-		el.type = "button";
-		el.className = "pku-fold-btn";
-		el.setAttribute("aria-expanded", "true");
-		const chev = chevron();
-		el.appendChild(chev);
-		let folded = false;
-		return {
-			el,
-			folded: () => folded,
-			onToggle(fn) {
-				el.addEventListener("click", () => {
-					folded = !folded;
-					el.setAttribute("aria-expanded", String(!folded));
-					chev.classList.toggle("pku-chev--open", folded);
-					fn(folded);
-				});
-			}
-		};
-	}
-	function markFolded(leader, hiddenRows) {
-		const row = leader.tr;
-		row.querySelectorAll("[data-pku-orig]").forEach((cell) => {
-			cell.innerHTML = cell.getAttribute("data-pku-orig");
-			cell.removeAttribute("data-pku-orig");
-		});
-		if (!hiddenRows.length) return;
-		const norm = (el) => el.textContent.replace(/[\s\u00a0]+/g, " ").trim();
-		const mark = (cell, others, force) => {
-			const base = norm(cell);
-			if (!force && !others.some((o) => o && norm(o) !== base)) return;
-			cell.setAttribute("data-pku-orig", cell.innerHTML);
-			cell.innerHTML = "<span class=\"pku-cell pku-folded-mark\">已折叠</span>";
-		};
-		const innerOf = (cell) => cell ? [...cell.querySelectorAll("table.pku-inner > tr > *")] : [];
-		for (let c = 0; c < row.children.length; c++) {
-			const mine = row.children[c];
-			if (!mine || mine.classList.contains("pku-foldcell")) continue;
-			if (mine.classList.contains("pku-col-name")) continue;
-			if (mine.classList.contains("pku-scrollcell")) {
-				innerOf(mine).forEach((cell, k) => {
-					mark(cell, hiddenRows.map((r) => innerOf(r.tr.children[c])[k]));
-				});
-				continue;
-			}
-			if (mine.querySelector("input") || mine.querySelector("a[href*=\"electCourse.do\"], a[href*=\"cancelCourse.do\"]")) {
-				mark(mine, [], true);
-				continue;
-			}
-			mark(mine, hiddenRows.map((r) => r.tr.children[c]));
-		}
 	}
 	function buildSectionHeads() {
 		const heads = [...document.querySelectorAll("font.subTitle")];
@@ -3298,6 +1962,94 @@
 		} else addEventListener("resize", apply);
 		addEventListener("load", apply);
 		if (document.fonts && document.fonts.ready) document.fonts.ready.then(apply);
+	}
+	function keepQueryFields() {
+		const form = document.getElementById("qyForm");
+		if (!form || !document.getElementById("kcfl")) return false;
+		const snap = () => ({
+			text: Q_TEXT.map((id) => (document.getElementById(id) || {}).value || ""),
+			sel: Q_SEL.map((id) => (document.getElementById(id) || {}).value || "")
+		});
+		const restore = (was) => {
+			Q_TEXT.forEach((id, i) => {
+				const el = document.getElementById(id);
+				if (el && !el.value && was.text[i]) el.value = was.text[i];
+			});
+			Q_SEL.forEach((id, i) => {
+				const el = document.getElementById(id);
+				if (!el || el.value || !was.sel[i]) return;
+				if (el.selectize) el.selectize.setValue(was.sel[i], true);
+				else el.value = was.sel[i];
+			});
+		};
+		form.addEventListener("change", (e) => {
+			if (!e.target || e.target.type !== "radio") return;
+			const was = snap();
+			setTimeout(() => restore(was), 0);
+		}, true);
+		return true;
+	}
+	var QUERY_TYPING_INTERVAL = 2e3;
+	function wireQueryAutoSearch() {
+		const form = document.getElementById("qyForm");
+		const go = document.getElementById("b_query");
+		if (!form || !go) return false;
+		const val = (id) => ((document.getElementById(id) || {}).value || "").trim();
+		const ready = () => !!form.querySelector("input[type=radio]:checked") && !!(val("courseID") || val("courseName") || val("deptID"));
+		let typed = 0;
+		const fire = () => {
+			if (ready()) go.click();
+		};
+		Q_TEXT.forEach((id) => {
+			const el = document.getElementById(id);
+			if (!el) return;
+			el.addEventListener("input", () => {
+				clearTimeout(typed);
+				typed = setTimeout(fire, QUERY_TYPING_INTERVAL);
+			});
+		});
+		["deptID"].concat(Q_SEL).forEach((id) => {
+			const el = document.getElementById(id);
+			if (el) el.addEventListener("change", fire);
+		});
+		form.addEventListener("change", (e) => {
+			if (e.target && e.target.type === "radio") setTimeout(fire, 0);
+		});
+		return true;
+	}
+	function buildQueryForm() {
+		const form = document.getElementById("qyForm");
+		const types = document.getElementById("kcfl");
+		if (!form || !types) return false;
+		if (form.querySelector(".pku-qtypes")) return false;
+		const shell = document.createElement("div");
+		shell.className = "pku-qform";
+		const seg = document.createElement("div");
+		seg.className = "pku-qtypes";
+		seg.setAttribute("role", "radiogroup");
+		const radios = [...types.querySelectorAll("input[type=radio]")];
+		radios.forEach((radio) => {
+			const label = document.createElement("label");
+			label.className = "pku-qtype";
+			const cap = radio.nextElementSibling;
+			const text = cap && cap.tagName === "SPAN" ? cap.textContent.trim() : radio.value;
+			label.appendChild(radio);
+			const name = document.createElement("span");
+			name.textContent = text;
+			label.appendChild(name);
+			if (cap && cap.tagName === "SPAN") cap.remove();
+			seg.appendChild(label);
+		});
+		const paint = () => radios.forEach((r) => r.parentElement.classList.toggle("pku-qtype--on", r.checked));
+		seg.addEventListener("change", paint);
+		seg.addEventListener("click", () => setTimeout(paint, 0));
+		paint();
+		shell.appendChild(seg);
+		form.prepend(shell);
+		const table = types.closest("table");
+		if (table && !table.contains(shell)) table.style.display = "none";
+		document.querySelectorAll(".theme-selector").forEach((el) => el.remove());
+		return true;
 	}
 	function ttPeriod(txt) {
 		return (txt || "").replace(/\s+/g, "").replace(/^第/, "").replace(/节$/, "");
@@ -3533,12 +2285,9 @@
 		if (ttStale()) applyTimetableStale(win);
 		return win;
 	}
-	var TT_CACHE = "pku-timetable";
-	var TT_PREF = "pku-timetable-pref";
-	var TT_STALE = "pku-timetable-stale";
 	function ttPref() {
 		try {
-			return JSON.parse(localStorage.getItem(TT_PREF) || "null") || {};
+			return JSON.parse(localStorage.getItem("pku-timetable-pref") || "null") || {};
 		} catch (e) {
 			return {};
 		}
@@ -3555,7 +2304,7 @@
 	}
 	function cachedTimetable() {
 		try {
-			const m = JSON.parse(sessionStorage.getItem(TT_CACHE) || "null");
+			const m = JSON.parse(sessionStorage.getItem("pku-timetable") || "null");
 			return m && m.days && m.rows && m.rows.length ? m : null;
 		} catch (e) {
 			return null;
@@ -3597,9 +2346,6 @@
 		const a = [...document.querySelectorAll("a[href]")].find((el) => /showResults/i.test(el.getAttribute("href") || ""));
 		return a ? a.href : null;
 	}
-	function timetableStartsOpen() {
-		return /courseQuery|electiveWork/i.test(location.href);
-	}
 	function mountTimetable(model) {
 		if (!model || document.querySelector(".pku-tt")) return false;
 		document.body.appendChild(renderTimetable(model, timetableStartsOpen()));
@@ -3632,95 +2378,6 @@
 		}).catch(() => {});
 		return "fetching";
 	}
-	var Q_TEXT = ["courseID", "courseName"];
-	var Q_SEL = ["courseDay", "courseTime"];
-	function keepQueryFields() {
-		const form = document.getElementById("qyForm");
-		if (!form || !document.getElementById("kcfl")) return false;
-		const snap = () => ({
-			text: Q_TEXT.map((id) => (document.getElementById(id) || {}).value || ""),
-			sel: Q_SEL.map((id) => (document.getElementById(id) || {}).value || "")
-		});
-		const restore = (was) => {
-			Q_TEXT.forEach((id, i) => {
-				const el = document.getElementById(id);
-				if (el && !el.value && was.text[i]) el.value = was.text[i];
-			});
-			Q_SEL.forEach((id, i) => {
-				const el = document.getElementById(id);
-				if (!el || el.value || !was.sel[i]) return;
-				if (el.selectize) el.selectize.setValue(was.sel[i], true);
-				else el.value = was.sel[i];
-			});
-		};
-		form.addEventListener("change", (e) => {
-			if (!e.target || e.target.type !== "radio") return;
-			const was = snap();
-			setTimeout(() => restore(was), 0);
-		}, true);
-		return true;
-	}
-	function wireQueryAutoSearch() {
-		const form = document.getElementById("qyForm");
-		const go = document.getElementById("b_query");
-		if (!form || !go) return false;
-		const val = (id) => ((document.getElementById(id) || {}).value || "").trim();
-		const ready = () => !!form.querySelector("input[type=radio]:checked") && !!(val("courseID") || val("courseName") || val("deptID"));
-		let typed = 0;
-		const fire = () => {
-			if (ready()) go.click();
-		};
-		Q_TEXT.forEach((id) => {
-			const el = document.getElementById(id);
-			if (!el) return;
-			el.addEventListener("input", () => {
-				clearTimeout(typed);
-				typed = setTimeout(fire, 500);
-			});
-		});
-		["deptID"].concat(Q_SEL).forEach((id) => {
-			const el = document.getElementById(id);
-			if (el) el.addEventListener("change", fire);
-		});
-		form.addEventListener("change", (e) => {
-			if (e.target && e.target.type === "radio") setTimeout(fire, 0);
-		});
-		return true;
-	}
-	function buildQueryForm() {
-		const form = document.getElementById("qyForm");
-		const types = document.getElementById("kcfl");
-		if (!form || !types) return false;
-		if (form.querySelector(".pku-qtypes")) return false;
-		const shell = document.createElement("div");
-		shell.className = "pku-qform";
-		const seg = document.createElement("div");
-		seg.className = "pku-qtypes";
-		seg.setAttribute("role", "radiogroup");
-		const radios = [...types.querySelectorAll("input[type=radio]")];
-		radios.forEach((radio) => {
-			const label = document.createElement("label");
-			label.className = "pku-qtype";
-			const cap = radio.nextElementSibling;
-			const text = cap && cap.tagName === "SPAN" ? cap.textContent.trim() : radio.value;
-			label.appendChild(radio);
-			const name = document.createElement("span");
-			name.textContent = text;
-			label.appendChild(name);
-			if (cap && cap.tagName === "SPAN") cap.remove();
-			seg.appendChild(label);
-		});
-		const paint = () => radios.forEach((r) => r.parentElement.classList.toggle("pku-qtype--on", r.checked));
-		seg.addEventListener("change", paint);
-		seg.addEventListener("click", () => setTimeout(paint, 0));
-		paint();
-		shell.appendChild(seg);
-		form.prepend(shell);
-		const table = types.closest("table");
-		if (table && !table.contains(shell)) table.style.display = "none";
-		document.querySelectorAll(".theme-selector").forEach((el) => el.remove());
-		return true;
-	}
 	function wireActions() {
 		if (typeof window.setEleHref === "function") {
 			const orig = window.setEleHref;
@@ -3728,7 +2385,6 @@
 				if (orig.apply(this, arguments)) {
 					markTimetableStale();
 					setLastOpCourse(courseName);
-					clearPin();
 					runElect(herfAdd.href);
 				}
 				return false;
@@ -3770,9 +2426,7 @@
 			if (anchor) anchor.after(frag);
 			else document.body.prepend(frag);
 		}
-		document.querySelectorAll(".pku-toolbar").forEach((bar) => {
-			bar.dispatchEvent(new Event("pku-refilter"));
-		});
+		refilter();
 	}
 	function refreshElectedGrid(doc) {
 		const live = [...document.querySelectorAll("table.datagrid")];
@@ -3792,80 +2446,33 @@
 			console.warn("[Beautiful PKU Elective] 已选列表 refresh failed:", e);
 		}
 	}
-	var PINNED_NAME = null;
-	function restoreNaturalOrder(grid) {
-		const model = GRID_MODEL.get(grid);
-		if (!model) return;
-		const order = model.rows.slice().sort((a, b) => (a.nat ?? 0) - (b.nat ?? 0));
-		const first = order.find((r) => r.tr.isConnected);
-		if (!first) {
-			model.rows = order;
-			return;
-		}
-		const parent = first.tr.parentNode;
-		const dataSet = new Set(model.rows.map((r) => r.tr));
-		const tailRows = [...parent.children].filter((tr) => !dataSet.has(tr) && !tr.querySelector("th"));
-		order.forEach((r) => parent.appendChild(r.tr));
-		tailRows.forEach((tr) => parent.appendChild(tr));
-		model.rows = order;
-		restripe(model);
-	}
-	function clearPin() {
-		if (!PINNED_NAME) return;
-		PINNED_NAME = null;
-		document.querySelectorAll("table.datagrid").forEach(restoreNaturalOrder);
-	}
-	function pinCourse(name) {
-		if (!name) return;
-		const norm = (s) => (s || "").replace(/[\s ]+/g, "").trim();
-		const grid = document.querySelector("table.datagrid");
-		if (!grid) return;
-		const model = GRID_MODEL.get(grid);
-		const target = model ? model.rows.find((r) => {
-			const cell = r.tr.querySelector(".pku-col-name .pku-cell");
-			return cell && norm(cell.textContent) === norm(name) && !r.hiddenByFilter;
-		}) : null;
-		if (!target) return;
-		const idx = model.rows.indexOf(target);
-		if (idx > 0) {
-			model.rows.splice(idx, 1);
-			model.rows.unshift(target);
-		}
-		const header = grid.querySelector("tr.pku-head-row");
-		if (header) header.after(target.tr);
-		else target.tr.parentNode.insertBefore(target.tr, target.tr.parentNode.firstChild);
-		restripe(model);
-	}
-	function scrollToList() {
-		const title = document.querySelector(".pku-section-headline");
-		if (!title) return;
-		const nav = document.querySelector(".pku-nav");
-		const navH = nav ? Math.round(nav.getBoundingClientRect().height) : 0;
-		const top = title.getBoundingClientRect().top + window.scrollY - navH - 4;
-		window.scrollTo(0, Math.max(0, top));
-	}
-	function restoreNav(nav) {
-		if (!nav) return;
-		if (nav.q) {
-			const input = document.getElementById("pku-course-search");
-			if (input) input.value = nav.q;
-			document.querySelectorAll(".pku-toolbar").forEach((bar) => {
-				bar.dispatchEvent(new Event("pku-refilter"));
-			});
-		}
-		if (nav.pin) {
-			PINNED_NAME = nav.pin;
-			pinCourse(nav.pin);
-		}
-		scrollToList();
-	}
+	var STYLES = [
+		Root,
+		Title,
+		NavMenu,
+		PageHero,
+		Noticies,
+		SectionHeads,
+		Toolbar,
+		CourseQuery,
+		FilterToggle,
+		Cache,
+		Chevron,
+		FilterPanel,
+		Footer,
+		Pager,
+		Grid,
+		Warnings,
+		Fold,
+		Timetable
+	].join("\n");
+	GM_addStyle(STYLES);
 	function buildPage() {
 		buildHeader();
 		removeNoteLine();
 		try {
-			LAST_OP_COURSE = sessionStorage.getItem("pku-last-op-course") || null;
+			state.lastOpCourse = sessionStorage.getItem("pku-last-op-course") || null;
 		} catch (e) {}
-		const nav = takeNavState();
 		const hero = buildHero();
 		const notices = buildNotices();
 		consumeLastOpCourse();
@@ -3878,8 +2485,7 @@
 			else document.body.prepend(frag);
 		}
 		let folds = 0;
-		const url = location.pathname + location.search;
-		const foldable = !/showResults/.test(url);
+		const foldable = !isResultsPage();
 		document.querySelectorAll("table.datagrid").forEach((grid, i) => {
 			const opts = {
 				fold: foldable && i === 0,
@@ -3899,9 +2505,7 @@
 		const sections = buildSectionHeads();
 		buildTimetableHead();
 		markNoTitleGrids();
-		document.querySelectorAll(".pku-toolbar").forEach((bar) => {
-			bar.dispatchEvent(new Event("pku-refilter"));
-		});
+		refilter();
 		if (!sections.tookActions) {
 			const links = takePlanLinks();
 			if (links.length) {
@@ -3924,7 +2528,6 @@
 		wireQueryAutoSearch();
 		const timetable = buildTimetable();
 		wireActions();
-		restoreNav(nav);
 		console.log("[Beautiful PKU Elective] hero =", !!hero, "; notices =", notices.length, "; sections =", sections.built, "; fold controls =", folds, "; pager =", pagers, "; timetable =", timetable);
 	}
 	if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", buildPage);

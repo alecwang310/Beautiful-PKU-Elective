@@ -3,29 +3,10 @@
 // unavailable ends are plain text and the rest are links, plus a 跳转到
 // <select> whose options carry the exact netui_row offset for every page.
 // That select is the source of truth: each page's URL is built from it.
-export const SEARCH_PAGE_SIZE = 20;
-export const pagerState = {
-  searchPage: 0,
-  searchActive: false,
-  searchTotal: 0,
-  pagerCtl: null,
-};
 
-
-// Page jumps (pager, 第N页) should land on the list, not the page top, and a
-// 第N页 jump should restore the search and pin the clicked course. This intent
-// is parked in sessionStorage so it survives the reload.
-function rememberNav(opts = {}) {
-	try {
-		sessionStorage.setItem('pku-nav', JSON.stringify({
-			q: opts.q || '',
-			pin: opts.pin || '',
-		}));
-	} catch (e) {}
-}
-function currentSearchQuery() {
-	return (document.getElementById('pku-course-search')?.value || '').trim();
-}
+import { SEARCH_PAGE_SIZE } from '../config.js';
+import { pagerState } from '../state.js';
+import { refilter } from '../events.js';
 
 // Switches the built-in pager between its server-page behaviour (empty search)
 // and client-side search pages (20 per page).
@@ -119,11 +100,6 @@ export function buildPager() {
 		const next = mk('step', chev('right', 1), fwd ? cur + 1 : null, '下一页');
 		const last = mk('edge', chev('right', 2), fwd ? pages - 1 : null, '最后一页');
 		bar.append(first, prev, info, next, last);
-		// a pager jump lands on the list (not the top) and reruns the search
-		bar.addEventListener('click', (e) => {
-			const a = e.target.closest('a.pku-pg');
-			if (a && a.getAttribute('href')) rememberNav({ q: currentSearchQuery() });
-		});
 
 		let jump = null;
 		if (sel && opts.length > 1) {
@@ -144,7 +120,7 @@ export function buildPager() {
 			});
 			pick.addEventListener('change', () => {
 				const href = hrefFor(Number(pick.value));
-				if (href) { rememberNav({ q: currentSearchQuery() }); location.assign(href); }
+				if (href) { location.assign(href); }
 			});
 			jump.appendChild(pick);
 			bar.appendChild(jump);
@@ -165,8 +141,7 @@ export function buildPager() {
 			pagerState.searchPage = fn(pagerState.searchPage);
 			const npages = Math.max(1, Math.ceil(pagerState.searchTotal / SEARCH_PAGE_SIZE));
 			pagerState.searchPage = Math.max(0, Math.min(npages - 1, pagerState.searchPage));
-			document.querySelectorAll('.pku-toolbar').forEach((b) =>
-				b.dispatchEvent(new Event('pku-refilter')));
+			refilter();
 		};
 		first.addEventListener('click', navTo(() => 0));
 		prev.addEventListener('click', navTo((p) => p - 1));

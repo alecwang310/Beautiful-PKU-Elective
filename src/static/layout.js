@@ -1,4 +1,4 @@
-import { C } from './config.js';
+import { C } from './styles.js';
 const css = String.raw;
 
 export const Root = css`
