@@ -835,12 +835,6 @@
       flex-wrap: wrap !important;
       gap: 10px !important;
     }
-    /* the client-side search pager lives in the toolbar, so it is left-aligned */
-    .pku-search-pager {
-      justify-content: flex-start !important;
-      gap: 8px !important;
-      padding: 8px 0 0 !important;
-    }
     .pku-pg-info { font-size: 13px !important; color: ${C.text} !important; }
     /* the two ends are bare blue chevrons; prev/next are filled blue buttons */
     .pku-pg,
@@ -1800,15 +1794,7 @@
       const total = (GRID_MODEL.get(grid) || { rows: [] }).rows.length;
       const filtering = state.q || Object.values(state.facets).some((v) => v.length);
       count.textContent = filtering ? matching + " / " + total : "";
-      const pages = Math.max(1, Math.ceil(matching / SEARCH_PAGE_SIZE));
-      if (searchPage >= pages) searchPage = pages - 1;
-      spager.style.display = filtering ? "" : "none";
-      sinfo.textContent = "第 " + (searchPage + 1) + " / " + pages + " 页";
-      sprev.classList.toggle("pku-pg--off", searchPage === 0);
-      snext.classList.toggle("pku-pg--off", searchPage >= pages - 1);
-      document.querySelectorAll(".pku-pager-cell").forEach((cell) => {
-        cell.style.display = filtering ? "none" : "";
-      });
+      setSearchPager(filtering, matching);
       const committed = takenCredits();
       ctally.textContent = "已选 " + fmtCredit(committed) + (state.creditLimit ? " / " + fmtCredit(state.creditLimit) : "");
       ctally.classList.toggle(
@@ -1842,33 +1828,6 @@
     } else {
       cache.remove();
     }
-    const spager = document.createElement("div");
-    spager.className = "pku-pager pku-search-pager";
-    spager.style.display = "none";
-    const sprev = document.createElement("a");
-    sprev.className = "pku-pg pku-pg--step";
-    sprev.href = "#";
-    sprev.setAttribute("aria-label", "上一页");
-    sprev.innerHTML = '<span class="pku-pg-chev pku-pg-chev--left"></span>';
-    const sinfo = document.createElement("span");
-    sinfo.className = "pku-pg-info";
-    const snext = document.createElement("a");
-    snext.className = "pku-pg pku-pg--step";
-    snext.href = "#";
-    snext.setAttribute("aria-label", "下一页");
-    snext.innerHTML = '<span class="pku-pg-chev pku-pg-chev--right"></span>';
-    spager.append(sprev, sinfo, snext);
-    bar.appendChild(spager);
-    sprev.addEventListener("click", (e) => {
-      e.preventDefault();
-      searchPage = Math.max(0, searchPage - 1);
-      run();
-    });
-    snext.addEventListener("click", (e) => {
-      e.preventDefault();
-      searchPage++;
-      run();
-    });
     let typeTimer = 0;
     input.addEventListener("input", () => {
       clearPin();
@@ -1976,19 +1935,18 @@
       const info = document.createElement("span");
       info.className = "pku-pg-info";
       info.textContent = "page " + (cur + 1) + " of " + pages;
-      bar.append(
-        mk("edge", chev("left", 2), back ? 0 : null, "第一页"),
-        mk("step", chev("left", 1), back ? cur - 1 : null, "上一页"),
-        info,
-        mk("step", chev("right", 1), fwd ? cur + 1 : null, "下一页"),
-        mk("edge", chev("right", 2), fwd ? pages - 1 : null, "最后一页")
-      );
+      const first = mk("edge", chev("left", 2), back ? 0 : null, "第一页");
+      const prev = mk("step", chev("left", 1), back ? cur - 1 : null, "上一页");
+      const next = mk("step", chev("right", 1), fwd ? cur + 1 : null, "下一页");
+      const last = mk("edge", chev("right", 2), fwd ? pages - 1 : null, "最后一页");
+      bar.append(first, prev, info, next, last);
       bar.addEventListener("click", (e) => {
         const a = e.target.closest("a.pku-pg");
         if (a && a.getAttribute("href")) rememberNav({ q: currentSearchQuery() });
       });
+      let jump = null;
       if (sel && opts.length > 1) {
-        const jump = document.createElement("label");
+        jump = document.createElement("label");
         jump.className = "pku-pg-jump";
         jump.textContent = "跳转到 ";
         const pick = document.createElement("select");
@@ -2010,6 +1968,29 @@
         bar.appendChild(jump);
         (sel.closest("form") || sel).remove();
       }
+      pagerCtl = {
+        first,
+        prev,
+        next,
+        last,
+        info,
+        jump,
+        back,
+        fwd,
+        serverInfo: "page " + (cur + 1) + " of " + pages
+      };
+      const navTo = (fn) => (e) => {
+        if (!searchActive) return;
+        e.preventDefault();
+        searchPage = fn(searchPage);
+        const npages = Math.max(1, Math.ceil(searchTotal / SEARCH_PAGE_SIZE));
+        searchPage = Math.max(0, Math.min(npages - 1, searchPage));
+        document.querySelectorAll(".pku-toolbar").forEach((b) => b.dispatchEvent(new Event("pku-refilter")));
+      };
+      first.addEventListener("click", navTo(() => 0));
+      prev.addEventListener("click", navTo((p) => p - 1));
+      next.addEventListener("click", navTo((p) => p + 1));
+      last.addEventListener("click", navTo(() => 1e9));
       const host = document.createElement("div");
       host.className = "pku-pager-cell";
       host.appendChild(bar);
@@ -2513,6 +2494,9 @@
   }
   const SEARCH_PAGE_SIZE = 20;
   let searchPage = 0;
+  let searchActive = false;
+  let searchTotal = 0;
+  let pagerCtl = null;
   function applyFilter(grid, state) {
     const model = GRID_MODEL.get(grid);
     if (!model) return 0;
@@ -2555,6 +2539,29 @@
     });
     restripe(model);
     return matching.length;
+  }
+  function setSearchPager(filtering, total) {
+    searchActive = filtering;
+    searchTotal = total;
+    if (!pagerCtl) return;
+    const c = pagerCtl;
+    const pages = Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE));
+    if (searchPage >= pages) searchPage = pages - 1;
+    if (filtering) {
+      c.info.textContent = "page " + (searchPage + 1) + " of " + pages;
+      c.first.classList.toggle("pku-pg--off", searchPage === 0);
+      c.prev.classList.toggle("pku-pg--off", searchPage === 0);
+      c.next.classList.toggle("pku-pg--off", searchPage >= pages - 1);
+      c.last.classList.toggle("pku-pg--off", searchPage >= pages - 1);
+      if (c.jump) c.jump.style.display = "none";
+    } else {
+      c.info.textContent = c.serverInfo;
+      c.first.classList.toggle("pku-pg--off", !c.back);
+      c.prev.classList.toggle("pku-pg--off", !c.back);
+      c.next.classList.toggle("pku-pg--off", !c.fwd);
+      c.last.classList.toggle("pku-pg--off", !c.fwd);
+      if (c.jump) c.jump.style.display = "";
+    }
   }
   function restripe(model) {
     const visible = model.rows.filter((r) => !r.hiddenByFilter);
@@ -2877,8 +2884,8 @@
   const COL_WIDE_K = 0.65;
   const COL_HEAD_K = 1.5;
   const COL_NOTE_K = 0.5;
-  const COL_HOLD = { "课程号": 1e3 };
-  const SHORT_FIELD_MULTIPLY = 1e3;
+  const COL_HOLD = { "课程号": 3 };
+  const SHORT_FIELD_MULTIPLY = 5;
   const COL_CODES = ["课程号", "课程班号"];
   function cellEm(td) {
     if (!td) return 0;

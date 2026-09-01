@@ -388,6 +388,7 @@ export const Toolbar = css`
       text-decoration: none !important;
     }`
 
+/* 课程查询界面 */
 export const CourseQuery = css`
     /* ---- course query page ---- */
     /* 查询 is the page's primary action, so it takes the same blue as every

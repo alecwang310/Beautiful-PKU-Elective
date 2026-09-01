@@ -501,17 +501,9 @@ GM_addStyle(STYLES);
         Object.values(state.facets).some((v) => v.length);
       count.textContent = filtering ? matching + ' / ' + total : '';
 
-      // client-side pager: visible only while filtering, 20 results per page
-      const pages = Math.max(1, Math.ceil(matching / SEARCH_PAGE_SIZE));
-      if (searchPage >= pages) searchPage = pages - 1;
-      spager.style.display = filtering ? '' : 'none';
-      sinfo.textContent = '第 ' + (searchPage + 1) + ' / ' + pages + ' 页';
-      sprev.classList.toggle('pku-pg--off', searchPage === 0);
-      snext.classList.toggle('pku-pg--off', searchPage >= pages - 1);
-      // hide the server pager while a search is active (results are paged here)
-      document.querySelectorAll('.pku-pager-cell').forEach((cell) => {
-        cell.style.display = filtering ? 'none' : '';
-      });
+      // repurpose the built-in pager: server pages when the search is empty,
+      // client-side 20-per-page search pages otherwise
+      setSearchPager(filtering, matching);
 
       // running tally of what is already committed against the ceiling
       const committed = takenCredits();
@@ -552,35 +544,6 @@ GM_addStyle(STYLES);
     } else {
       cache.remove();   // single page: nothing to cache
     }
-
-    // ---- client-side search pager (20 results per page) ----
-    const spager = document.createElement('div');
-    spager.className = 'pku-pager pku-search-pager';
-    spager.style.display = 'none';
-    const sprev = document.createElement('a');
-    sprev.className = 'pku-pg pku-pg--step';
-    sprev.href = '#';
-    sprev.setAttribute('aria-label', '上一页');
-    sprev.innerHTML = '<span class="pku-pg-chev pku-pg-chev--left"></span>';
-    const sinfo = document.createElement('span');
-    sinfo.className = 'pku-pg-info';
-    const snext = document.createElement('a');
-    snext.className = 'pku-pg pku-pg--step';
-    snext.href = '#';
-    snext.setAttribute('aria-label', '下一页');
-    snext.innerHTML = '<span class="pku-pg-chev pku-pg-chev--right"></span>';
-    spager.append(sprev, sinfo, snext);
-    bar.appendChild(spager);
-    sprev.addEventListener('click', (e) => {
-      e.preventDefault();
-      searchPage = Math.max(0, searchPage - 1);
-      run();
-    });
-    snext.addEventListener('click', (e) => {
-      e.preventDefault();
-      searchPage++;
-      run();
-    });
 
     // typing settles for 500ms before the table is touched
     let typeTimer = 0;
@@ -746,21 +709,20 @@ GM_addStyle(STYLES);
       info.className = 'pku-pg-info';
       info.textContent = 'page ' + (cur + 1) + ' of ' + pages;
 
-      bar.append(
-        mk('edge', chev('left', 2), back ? 0 : null, '第一页'),
-        mk('step', chev('left', 1), back ? cur - 1 : null, '上一页'),
-        info,
-        mk('step', chev('right', 1), fwd ? cur + 1 : null, '下一页'),
-        mk('edge', chev('right', 2), fwd ? pages - 1 : null, '最后一页'),
-      );
+      const first = mk('edge', chev('left', 2), back ? 0 : null, '第一页');
+      const prev = mk('step', chev('left', 1), back ? cur - 1 : null, '上一页');
+      const next = mk('step', chev('right', 1), fwd ? cur + 1 : null, '下一页');
+      const last = mk('edge', chev('right', 2), fwd ? pages - 1 : null, '最后一页');
+      bar.append(first, prev, info, next, last);
       // a pager jump lands on the list (not the top) and reruns the search
       bar.addEventListener('click', (e) => {
         const a = e.target.closest('a.pku-pg');
         if (a && a.getAttribute('href')) rememberNav({ q: currentSearchQuery() });
       });
 
+      let jump = null;
       if (sel && opts.length > 1) {
-        const jump = document.createElement('label');
+        jump = document.createElement('label');
         jump.className = 'pku-pg-jump';
         jump.textContent = '跳转到 ';
 
@@ -783,6 +745,28 @@ GM_addStyle(STYLES);
         bar.appendChild(jump);
         (sel.closest('form') || sel).remove();
       }
+
+      // store the controls so a search can repurpose this pager client-side
+      pagerCtl = {
+        first, prev, next, last, info, jump,
+        back, fwd, serverInfo: 'page ' + (cur + 1) + ' of ' + pages,
+      };
+
+      // client-side navigation while a search is active (otherwise the default
+      // <a> href lets the site's own paging proceed as before)
+      const navTo = (fn) => (e) => {
+        if (!searchActive) return;
+        e.preventDefault();
+        searchPage = fn(searchPage);
+        const npages = Math.max(1, Math.ceil(searchTotal / SEARCH_PAGE_SIZE));
+        searchPage = Math.max(0, Math.min(npages - 1, searchPage));
+        document.querySelectorAll('.pku-toolbar').forEach((b) =>
+          b.dispatchEvent(new Event('pku-refilter')));
+      };
+      first.addEventListener('click', navTo(() => 0));
+      prev.addEventListener('click', navTo((p) => p - 1));
+      next.addEventListener('click', navTo((p) => p + 1));
+      last.addEventListener('click', navTo(() => 1e9));
 
       const host = document.createElement('div');
       host.className = 'pku-pager-cell';
@@ -1450,6 +1434,9 @@ GM_addStyle(STYLES);
   // rules and the fold controls all describe the visible table.
   const SEARCH_PAGE_SIZE = 20;
   let searchPage = 0;   // current search-result page (0-based)
+  let searchActive = false;
+  let searchTotal = 0;
+  let pagerCtl = null;  // the built-in pager's controls, repurposed by search
 
   function applyFilter(grid, state) {
     const model = GRID_MODEL.get(grid);
@@ -1514,6 +1501,33 @@ GM_addStyle(STYLES);
 
     restripe(model);
     return matching.length;
+  }
+
+  // Switches the built-in pager between its server-page behaviour (empty search)
+  // and client-side search pages (20 per page). The buttons keep their original
+  // markup and hrefs; the click handlers installed in buildPager pick which to use.
+  function setSearchPager(filtering, total) {
+    searchActive = filtering;
+    searchTotal = total;
+    if (!pagerCtl) return;
+    const c = pagerCtl;
+    const pages = Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE));
+    if (searchPage >= pages) searchPage = pages - 1;
+    if (filtering) {
+      c.info.textContent = 'page ' + (searchPage + 1) + ' of ' + pages;
+      c.first.classList.toggle('pku-pg--off', searchPage === 0);
+      c.prev.classList.toggle('pku-pg--off', searchPage === 0);
+      c.next.classList.toggle('pku-pg--off', searchPage >= pages - 1);
+      c.last.classList.toggle('pku-pg--off', searchPage >= pages - 1);
+      if (c.jump) c.jump.style.display = 'none';
+    } else {
+      c.info.textContent = c.serverInfo;
+      c.first.classList.toggle('pku-pg--off', !c.back);
+      c.prev.classList.toggle('pku-pg--off', !c.back);
+      c.next.classList.toggle('pku-pg--off', !c.fwd);
+      c.last.classList.toggle('pku-pg--off', !c.fwd);
+      if (c.jump) c.jump.style.display = '';
+    }
   }
 
   // Zebra and group rules are recomputed over the VISIBLE rows only, so the
@@ -1911,8 +1925,8 @@ GM_addStyle(STYLES);
   const COL_WIDE_K = 0.65;  // ...to this much of itself, so long text folds
   const COL_HEAD_K = 1.5;   // never narrower than 1.5x its own heading
   const COL_NOTE_K = 0.5;   // 备注 is always half its own W, however wide
-  const COL_HOLD = { '课程号': 1000 };   // gives up width 3x more grudgingly
-  const SHORT_FIELD_MULTIPLY = 1000; // multiplys fields below 5% to stop super short fields from folding
+  const COL_HOLD = { '课程号': 3 };   // gives up width 3x more grudgingly
+  const SHORT_FIELD_MULTIPLY = 5; // multiplys fields below 5% to stop super short fields from folding
   const COL_CODES = ['课程号', '课程班号'];   // class-code columns never fold
 
   // What one cell needs is its longest LINE, not the sum of its text: a cell
