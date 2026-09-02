@@ -1,0 +1,4 @@
+1. filter only works on current page, it shouls work on the entire cache
+2. when a filter is on, the filter box should be blue when the drop down closes. and the selector box should read: 开课学院：马克思主义..... with extra text truncated as ... as defualt, not overflowing.
+3. for the width measuring. if it turns out the 85 percentile width is no text (there could be padding), then change the 85 percentile to the longest text (a lot of emtpy and a few texts should not get squashed into one vertical liners)
+4. 

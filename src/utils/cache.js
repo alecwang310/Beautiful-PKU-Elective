@@ -1,19 +1,22 @@
 // ---- cross-page cache ----
 // Search and filtering only see the rows the server sent. The other pages are
-// fetched once in the background (same-origin, so the session cookie rides
+// read once in the background (same-origin, so the session cookie rides
 // along), parsed, and their rows adopted into this grid -- hidden until a
 // search or filter matches them.
 //
-// Their 预选 link cannot be reused: it carries index=N, the row's position in
-// the server's CURRENT page, and every row on a page shares one eid. Clicking
-// a cached row's link would act on whatever occupies that index here, so the
-// action cell is replaced with a link to the page the row lives on.
+// One page per request, walked in order, and every one of them goes through
+// the gate in utils/net.js: one request at a time, over a second apart,
+// dropped when the user navigates away, and stopped altogether the moment the
+// site answers with its 系统提示 page. The reads are what the anti-bot
+// machinery is there for -- a burst of them right after a page load is what
+// was getting the session thrown out.
 
 import { CACHE_STORE_KEY, LAST_VIEW_KEY, ALL_ROWS } from '../config.js';
 import { state } from '../state.js';
 import { parseInfoCell, dropLegacyRowStyling, captureRowValues } from './table.js';
+import { gatedFetch, isBlocked } from './net.js';
 
-const PAGE_CACHE = { pages: [], done: 0, total: 0, rows: [] };
+const PAGE_CACHE = { pages: [], done: 0, total: 0, rows: [], blocked: false };
 
 // buildPager() removes the site's <select name="netui_row"> (and its form)
 // when it replaces the pager with the styled jump select, but the cross-page
@@ -134,21 +137,27 @@ export async function buildPageCache(grid, onProgress) {
   PAGE_CACHE.total = opts.length;
   PAGE_CACHE.done = 1;                 // the page we are on is already here
   PAGE_CACHE.pages = opts.map((_, i) => i === cur);
+  PAGE_CACHE.blocked = false;
+
+  // the session is already in trouble: ask for nothing, and say so
+  if (isBlocked()) return stopCache(opts, cur, onProgress);
   onProgress(PAGE_CACHE);
 
   const store = {};
   for (let i = 0; i < opts.length; i++) {
-    // human-ish pacing with a little jitter, so a burst of page fetches does
-    // not read as a scraper
-    await new Promise((r) => setTimeout(r, 300 + (Math.random() * 100 - 50)));
     try {
-      const res = await fetch(pageUrl(opts, i), { credentials: 'same-origin' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+      // The gate paces this: one request at a time, well over a second apart,
+      // and longer still after a page load. No sleeping here.
+      const { text } = await gatedFetch(pageUrl(opts, i));
+      const doc = new DOMParser().parseFromString(text, 'text/html');
       store[i] = readPageRows(doc, grid);
       if (i !== cur) adoptPage(grid, doc, i);
       PAGE_CACHE.pages[i] = true;
     } catch (e) {
+      // A refusal is about the session, not about this page: the ones after it
+      // would be refused too, and asking anyway is what a script that has
+      // stopped noticing would do.
+      if (e.blocked) return stopCache(opts, cur, onProgress);
       console.warn('[Beautiful PKU Elective] page', i + 1, 'not cached:', e.message);
       PAGE_CACHE.pages[i] = 'error';
     }
@@ -157,6 +166,15 @@ export async function buildPageCache(grid, onProgress) {
   }
   persistPageCache(opts.length, store);
   return true;
+}
+
+// Give up on the rest of the list: every page but the one on screen is marked
+// as unread, so the bar shows what happened rather than filling in silence.
+function stopCache(opts, cur, onProgress) {
+  PAGE_CACHE.blocked = true;
+  PAGE_CACHE.pages = opts.map((_, i) => (i === cur ? true : 'error'));
+  onProgress(PAGE_CACHE);
+  return false;
 }
 
 // Raw HTML of a fetched page's data rows, for parking in the cross-page cache.
@@ -195,8 +213,8 @@ function adoptPage(grid, doc, pageIndex) {
 }
 
 // Rebuilds one fetched row so it matches the live grid: reorder 上课/考试信息,
-// neutralise the page-bound action link, wrap cells, add the fold gutter, and
-// merge the same columns into a scrolling pane.
+// wrap cells, add the fold gutter, and merge the same columns into a
+// scrolling pane.
 function adoptForeignRow(tr, model, pageIndex) {
   const { iInfo, paneFirst, paneLast, paneWidths, paneOrder } = model.shape;
 
@@ -215,9 +233,7 @@ function adoptForeignRow(tr, model, pageIndex) {
     tr.insertBefore(n, src.nextSibling);
   }
 
-  // 2. keep the direct 预选/删除 link and its 意愿值 input on foreign rows
-  //    (experiment: the action is page-bound, but leave it in place to see
-  //    what happens instead of swapping in a "第N页" jump link)
+  // 2. the direct 预选/删除 link and its 意愿值 input carry over as they are
 
   // 3. capture searchable/filterable values while the indices still match the
   //    original header order (the split above kept everything left of iInfo,

@@ -79,6 +79,16 @@ export const COL_HOLD = { '课程号': 3 };   // gives up width 3x more grudging
 export const SHORT_FIELD_MULTIPLY = 5; // multiplys fields below 5% to stop super short fields from folding
 export const COL_CODES = ['课程号', '课程班号'];   // class-code columns never fold
 
+// ---- 预选 ----
+// Whether a 预选 is sent in the background (true: the page never reloads and
+// the result is folded in place) or left to the site's own navigation (false).
+// The background request is one request either way, but it goes out as an XHR
+// rather than as a document navigation, which is one more thing that tells a
+// script apart from a person. Set this to false to hand 预选 back to the site
+// exactly as it shipped -- the first thing to try if 预选 clicks are still
+// getting the session thrown out.
+export const BACKGROUND_ELECT = true;
+
 // ---- defaults & limits ----
 export const DEFAULT_CREDIT_LIMIT = 25;
 export const SEARCH_PAGE_SIZE = 20;
@@ -101,6 +111,9 @@ export const LAST_VIEW_KEY = 'pku-elective-last-view';
 export const TT_CACHE = 'pku-timetable';
 export const TT_PREF = 'pku-timetable-pref';
 export const TT_STALE = 'pku-timetable-stale';
+// the login the stored timetable was read under; a different one means it
+// belongs to a session that has since been replaced
+export const TT_EID = 'pku-timetable-eid';
 
 // ---- course query page ----
 export const Q_TEXT = ['courseID', 'courseName'];

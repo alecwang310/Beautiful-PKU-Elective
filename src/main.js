@@ -5,13 +5,13 @@
 import {
   Root, Title, NavMenu, PageHero, Noticies,
   SectionHeads, Toolbar, CourseQuery, FilterToggle, Cache, Chevron,
-  FilterPanel, Footer, Pager, Grid, Warnings, Fold, Timetable,
+  FilterPanel, Footer, Pager, Grid, Warnings, Fold, Timetable, ErrorPage,
 } from './static/layout.js';
 
 const STYLES = [
   Root, Title, NavMenu, PageHero, Noticies,
   SectionHeads, Toolbar, CourseQuery, FilterToggle, Cache, Chevron,
-  FilterPanel, Footer, Pager, Grid, Warnings, Fold, Timetable,
+  FilterPanel, Footer, Pager, Grid, Warnings, Fold, Timetable, ErrorPage,
 ].join('\n');
 
 GM_addStyle(STYLES);
@@ -35,9 +35,58 @@ import { takePlanLinks } from './ui/toolbar.js';
 import { keepQueryFields, buildQueryForm, wireQueryAutoSearch } from './utils/query.js';
 import { buildTimetable } from './utils/timetable.js';
 import { wireActions } from './utils/actions.js';
+import { isBlocked, kickedDocument, markBlocked } from './utils/net.js';
+import { buildErrorPage } from './ui/error-page.js';
+import { markTimetableStale } from './utils/timetable.js';
 
+// ---- when the site stops answering ----
+// The gate in utils/net.js shuts the moment a background read comes back as a
+// login page or a 限流 notice, and says so here. Without this the script would
+// just quietly stop filling the search and the timetable, and the reason (the
+// session is gone -- the site wants a fresh login) would only be visible in
+// the console.
+let blockedShown = false;
+function showBlockedNotice(why) {
+  if (blockedShown || document.querySelector('.pku-notice--blocked')) return;
+  // the 系统提示 page already says it, larger and on its own
+  if (document.querySelector('.pku-err')) return;
+  blockedShown = true;
+  const card = document.createElement('div');
+  card.className = 'pku-notice pku-notice--error pku-notice--blocked';
+  const head = document.createElement('div');
+  head.innerHTML = '<strong>' + (why || '选课网站拒绝了本脚本的后台请求') + '</strong>';
+  const body = document.createElement('div');
+  body.textContent = '本脚本已停止一切后台读取（跨页搜索缓存、课程表刷新），'
+    + '页面本身不受影响。请重新登录选课网站；如果反复出现，可以先关闭本脚本再选课。';
+  card.append(head, body);
+  const anchor = document.querySelector('.pku-notice:last-of-type')
+    || document.querySelector('.pku-hero')
+    || document.querySelector('.pku-header');
+  if (anchor) anchor.after(card); else document.body.prepend(card);
+}
+addEventListener('pku-blocked', (e) => showBlockedNotice(e.detail && e.detail.why));
+
+// Phase one builds the top-of-page chrome -- header, title, notices -- and
+// paints it immediately. Phase two (the grid reskin) is the heavy part: sorting
+// rows, measuring columns, forced reflows. If it ran in the same task it would
+// hold the chrome's paint back, so the title and notices would seem to lag.
 function buildPage() {
   buildHeader();
+  // The site's 系统提示 page: the session is gone and every link on it leads
+  // back here until the user logs in again. There is no list to reskin and
+  // nothing to read in the background -- asking for anything from here is both
+  // useless and exactly what a script that has stopped noticing would do.
+  if (kickedDocument()) {
+    // the reskin first: it says the same thing in the page's own words, so the
+    // blocked notice would only repeat it (showBlockedNotice steps aside)
+    buildErrorPage();
+    markBlocked('选课网站提示会话超时或尚未登录');
+    // whatever the user logs back in as, the stored timetable was read under
+    // the session that just ended: it comes back blurred, asking to be read
+    // again
+    markTimetableStale();
+    return;
+  }
   removeNoteLine();
   // On 维护选课计划 the list should show every row on one page (no paging),
   // like the original site. requestAllRows redirects once to raise the page
@@ -60,6 +109,11 @@ function buildPage() {
     if (anchor) anchor.after(frag); else document.body.prepend(frag);
   }
 
+  // Let the chrome paint on this frame, then reskin the grids on the next.
+  requestAnimationFrame(() => requestAnimationFrame(buildPageContent));
+}
+
+function buildPageContent() {
   let folds = 0;
   // 选课结果 is a read-only record, so it uses the plain grid: no folding.
   // Elsewhere the first list folds (预选's 可选列表, 维护选课计划's 选课计划列表)
@@ -109,6 +163,7 @@ function buildPage() {
   wireQueryAutoSearch();
   const timetable = buildTimetable();
   wireActions();
+  if (isBlocked()) showBlockedNotice();
 }
 
 if (document.readyState === 'loading') {

@@ -25,31 +25,25 @@ export function takePlanLinks() {
   return links;
 }
 
-// ---- filter option values, read from the grid itself ----
-function columnValues(grid) {
-  // Scoped to the OUTER table only. querySelectorAll would also return the
-  // scrolling pane's nested table -- its rows have their own children, so
-  // cells[idx] there lands on unrelated text (e.g. a 备注 string under
-  // 课程类别). Rows and headers must come from the same level to line up.
-  const outerRows = [...grid.rows].filter((tr) => !tr.closest('table.pku-inner'));
-  const headRow = outerRows.find((tr) => tr.querySelector('th'));
-  const heads = headRow
-    ? [...headRow.children].map((th) => th.textContent.replace(/[\s ]+/g, '').trim())
-    : [];
+// ---- filter option values, read from the row MODEL ----
+// Not from the grid's DOM: the cross-page cache adopts the rest of the list
+// after the toolbar is built, so a DOM read would freeze the options at
+// whatever the server happened to send for the page on screen. The model is
+// where the cached rows land too, and captureRowValues has already pulled each
+// row's facet values out of it (utils/table.js), so reading from there is both
+// simpler and complete.
+function facetValues(grid) {
+  const model = appState.gridModel.get(grid);
   const out = {};
-
   FACETS.forEach(({ column }) => {
     if (!column) return;          // fixed-option facet, nothing to scan
-    const idx = heads.indexOf(column);
-    if (idx < 0) { out[column] = []; return; }
     const seen = new Set();
-    outerRows.forEach((tr) => {
-      if (tr === headRow || tr.querySelector('th')) return;
-      const cell = tr.children[idx];
-      if (!cell) return;
-      const v = cell.textContent.replace(/[\s ]+/g, ' ').trim();
-      if (v) seen.add(v);
-    });
+    if (model) {
+      model.rows.forEach((r) => {
+        const v = r.facets && r.facets[column];
+        if (v) seen.add(v);
+      });
+    }
     out[column] = [...seen].sort((a, b) => {
       const na = parseFloat(a), nb = parseFloat(b);
       const bothNum = !isNaN(na) && !isNaN(nb) &&
@@ -57,7 +51,6 @@ function columnValues(grid) {
       return bothNum ? na - nb : a.localeCompare(b, 'zh');
     });
   });
-
   return out;
 }
 
@@ -149,11 +142,29 @@ export function buildToolbar(grid) {
   const panel = document.createElement('div');
   panel.className = 'pku-filters';
 
-  const values = grid ? columnValues(grid) : {};
-  FACETS.forEach(({ label: name, column, options }) => {
-    const opts = options || values[column] || [];
-    if (!opts.length) return;
+  // Every facet is built once and then kept in step with the row model:
+  // options are re-read as the cross-page cache lands, and each button carries
+  // its own selection ("开课学院：马克思主义…") so the panel can stay closed.
+  const facetCtl = [];
 
+  const optionRow = (v) => {
+    const li = document.createElement('li');
+    const opt = document.createElement('label');
+    opt.className = 'pku-opt';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = v;
+    const dot = document.createElement('span');
+    dot.className = 'pku-dot';
+    const txt = document.createElement('span');
+    txt.className = 'pku-opt-text';
+    txt.textContent = v;
+    opt.append(cb, dot, txt);
+    li.appendChild(opt);
+    return li;
+  };
+
+  FACETS.forEach(({ label: name, column, options }) => {
     const facet = document.createElement('div');
     facet.className = 'pku-facet';
     facet.dataset.facetKey = column || name;   // 状态 has no column
@@ -163,6 +174,7 @@ export function buildToolbar(grid) {
     btn.className = 'pku-facet-btn';
     btn.setAttribute('aria-expanded', 'false');
     const bText = document.createElement('span');
+    bText.className = 'pku-facet-name';
     bText.textContent = name;
     const bChev = chevron();
     btn.append(bText, bChev);
@@ -171,27 +183,15 @@ export function buildToolbar(grid) {
     listWrap.className = 'pku-facet-list';
     const list = document.createElement('ul');
     list.className = 'pku-facet-opts';
-
-    opts.forEach((v) => {
-      const li = document.createElement('li');
-      const opt = document.createElement('label');
-      opt.className = 'pku-opt';
-      const cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.value = v;
-      const dot = document.createElement('span');
-      dot.className = 'pku-dot';
-      const txt = document.createElement('span');
-      txt.className = 'pku-opt-text';
-      txt.textContent = v;
-      opt.append(cb, dot, txt);
-      li.appendChild(opt);
-      list.appendChild(li);
-    });
+    (options || []).forEach((v) => list.appendChild(optionRow(v)));
 
     listWrap.appendChild(list);
     facet.append(btn, listWrap);
     panel.appendChild(facet);
+    // a facet whose options are read from the rows starts empty and is filled
+    // by syncFacets below; one with a fixed list is already complete
+    facet.hidden = !options;
+    facetCtl.push({ facet, btn, bText, list, name, column, fixed: !!options });
 
     let closeTimer = 0;
     btn.addEventListener('click', () => {
@@ -210,6 +210,43 @@ export function buildToolbar(grid) {
       }
     });
   });
+
+  // Re-reads the option lists from the row model, keeping whatever is ticked.
+  // Called once at build time and again every time cached rows arrive, so a
+  // 开课学院 that only appears on page 3 is offered as soon as page 3 is here.
+  const syncFacets = () => {
+    const values = grid ? facetValues(grid) : {};
+    facetCtl.forEach((f) => {
+      if (f.fixed) return;
+      const want = values[f.column] || [];
+      const have = [...f.list.querySelectorAll('input[type="checkbox"]')];
+      if (have.length === want.length &&
+          have.every((cb, i) => cb.value === want[i])) return;
+      const on = new Set(have.filter((cb) => cb.checked).map((cb) => cb.value));
+      f.list.textContent = '';
+      want.forEach((v) => {
+        const li = optionRow(v);
+        if (on.has(v)) li.querySelector('input').checked = true;
+        f.list.appendChild(li);
+      });
+      f.facet.hidden = !want.length;
+    });
+  };
+
+  // The closed button says what the facet is filtering on, and turns blue while
+  // it is filtering anything -- the panel spends most of its life shut, so the
+  // state has to be readable from the button alone.
+  const paintFacets = () => {
+    facetCtl.forEach((f) => {
+      const on = [...f.list.querySelectorAll('input[type="checkbox"]')]
+        .filter((cb) => cb.checked).map((cb) => cb.value);
+      f.facet.classList.toggle('pku-facet--on', on.length > 0);
+      f.bText.textContent = on.length ? f.name + '：' + on.join('、') : f.name;
+      f.btn.title = on.length ? f.name + '：' + on.join('、') : '';
+    });
+  };
+
+  syncFacets();   // the rows the server sent; the cache adds to them later
 
   bar.appendChild(panel);   // its own line, below the button row
 
@@ -238,6 +275,10 @@ export function buildToolbar(grid) {
   });
 
   // ---- cross-page cache + progress ----
+  // One segment per server page, filled as that page lands. The reads are
+  // paced by the gate and arrive a second or two apart, so this is a real
+  // measure of a real wait -- which is exactly when a progress bar earns its
+  // place.
   const cache = document.createElement('div');
   cache.className = 'pku-cache';
   const track = document.createElement('div');
@@ -271,6 +312,7 @@ export function buildToolbar(grid) {
   };
 
   const run = () => {
+    paintFacets();
     const filterState = readState();
     const matching = applyFilter(grid, filterState);
     const total = (appState.gridModel.get(grid) || { rows: [] }).rows.length;
@@ -296,7 +338,8 @@ export function buildToolbar(grid) {
   bar.addEventListener('pku-refilter', run);
 
   // Build the cache of the other pages so search covers all of them. Rows
-  // arrive progressively and the current filter is re-applied as they land.
+  // arrive progressively and the current filter is re-applied as they land --
+  // and so are the filter options, which grow with them.
   const paint = (st) => {
     if (!track.children.length) {
       for (let i = 0; i < st.total; i++) {
@@ -313,8 +356,13 @@ export function buildToolbar(grid) {
     });
     const loaded = st.pages.filter((x) => x === true).length;
     const done = loaded >= st.total;
-    cacheLabel.textContent = done ? '缓存建立成功' : '正在建立缓存';
+    cacheLabel.textContent = st.blocked ? '缓存已暂停（网站限流）'
+      : done ? '缓存建立成功'
+      : st.pages.some((x) => x === 'error') ? '部分页面读取失败'
+      : '正在建立缓存';
     cache.classList.toggle('pku-cache--done', done);
+    cache.classList.toggle('pku-cache--err', !!st.blocked);
+    syncFacets();
     run();
   };
 

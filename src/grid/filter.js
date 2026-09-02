@@ -64,25 +64,41 @@ function clashesWithTaken(r, taken) {
   return r.slots.some((a) => taken.some((b) => slotsClash(a, b)));
 }
 
-// Credits already committed: summed from the 已选列表 grid.
-export function takenCredits() {
-  const grids = [...document.querySelectorAll('table.datagrid')];
-  let sum = 0;
-  grids.slice(1).forEach((g) => {
-    const m = appState.gridModel.get(g);
-    if (m) m.rows.forEach((r) => { if (!r.foreign) sum += r.credit || 0; });
-  });
-  return sum;
+// The rows of every already-selected course -- what the credit tally, the
+// clash marking and the timetable are all read from.
+//
+// A list you can only leave is a list you are already on: the 已选列表 ends in
+// a 取消 column where the list you are choosing from ends in 预选 or 补选. That
+// is what identifies it, rather than its position on the page, which only
+// happens to be second on 预选. Position is kept as the fallback for a page
+// whose action column is named something else.
+function isTakenGrid(model) {
+  const labels = (model.shape && model.shape.labels) || [];
+  return labels.some((l) => l === '取消');
 }
 
-// Slots of every already-selected course, gathered from the second grid.
-export function takenSlots() {
-  const grids = [...document.querySelectorAll('table.datagrid')];
+export function takenRows() {
+  const models = [...document.querySelectorAll('table.datagrid')]
+    .map((g) => appState.gridModel.get(g))
+    .filter(Boolean);
+  const taken = models.filter(isTakenGrid);
+  const use = taken.length ? taken : models.slice(1);
   const out = [];
-  grids.slice(1).forEach((g) => {
-    const m = appState.gridModel.get(g);
-    if (m) m.rows.forEach((r) => out.push(...r.slots));
-  });
+  // rows adopted from the cross-page cache belong to the list being chosen
+  // from, never to this one, but they are skipped explicitly all the same
+  use.forEach((m) => m.rows.forEach((r) => { if (!r.foreign) out.push(r); }));
+  return out;
+}
+
+// Credits already committed: summed from the 已选列表 grid.
+export function takenCredits() {
+  return takenRows().reduce((sum, r) => sum + (r.credit || 0), 0);
+}
+
+// Slots of every already-selected course.
+export function takenSlots() {
+  const out = [];
+  takenRows().forEach((r) => out.push(...r.slots));
   return out;
 }
 

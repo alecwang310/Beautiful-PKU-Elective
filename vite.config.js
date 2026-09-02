@@ -45,7 +45,7 @@ export default defineConfig({
       userscript: {
         name: 'Beautiful PKU Elective',
         namespace: 'beautiful.pku.elective.v1',
-        version: '1.0.1',
+        version: '1.1.0',
         description: 'Modern UI for elective.pku.edu.cn with more powerful features',
         author: 'Alecwang (https://github.com/alecwang310)',
         license: 'MIT',

@@ -2,7 +2,8 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist/**', 'node_modules/**'] },
+  // dino.js and its assets are vendored Chromium source, not ours to lint
+  { ignores: ['dist/**', 'node_modules/**', 'src/static/dino.js', 'src/static/dino-assets.js'] },
   js.configs.recommended,
   {
     languageOptions: {

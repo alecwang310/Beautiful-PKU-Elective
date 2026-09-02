@@ -197,11 +197,19 @@ export const Noticies = css`
       font-size: 13px !important;
       line-height: 1.75 !important;
     }
-    /* the site marks urgent copy red; here it reads as bold black */
+    /* the site marks urgent copy red; here it reads as bold black. The colour
+       is flattened by the rule above; the emphasis is restored by bolding the
+       site's own red markers (.errmsg, a legacy <font color>, or an inline
+       color) in CSS -- so buildNotices leaves the cloned markup untouched. */
     .pku-notice, .pku-notice * {
       color: ${C.text} !important;
       background: transparent !important;
       font-size: 13px !important;
+    }
+    .pku-notice .errmsg,
+    .pku-notice font[color],
+    .pku-notice [style*="color"] {
+      font-weight: 700 !important;
     }
     .pku-notice strong { font-weight: 700 !important; }
     /* an operation failure reads as a notice, but red: light-red fill, red edge */
@@ -529,6 +537,7 @@ export const Cache = css`
       white-space: nowrap !important;
     }
     .pku-cache--done .pku-cache-status { color: ${C.text} !important; }
+    .pku-cache--err .pku-cache-status { color: ${C.accent} !important; }
     .pku-cache-track {
       display: flex !important;
       gap: 3px !important;
@@ -670,6 +679,7 @@ export const FilterPanel = css`
       justify-content: space-between !important;
       gap: 8px !important;
       width: 100% !important;
+      min-width: 0 !important;
       box-sizing: border-box !important;
       padding: 8px 10px !important;
       font-size: 13px !important;
@@ -679,6 +689,25 @@ export const FilterPanel = css`
       border: none !important;
       cursor: pointer !important;
       text-align: left !important;
+    }
+    /* The label carries the chosen values ("开课学院：马克思主义…"), so it is the
+       part that has to give: it truncates, and the chevron holds its place. */
+    .pku-facet-name {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      white-space: nowrap !important;
+      text-overflow: ellipsis !important;
+    }
+    .pku-facet-btn .pku-chev { flex: 0 0 auto !important; }
+    /* Filtering, and closed: the button is the only thing left saying so. While
+       the dropdown is open the ticks are visible anyway, so it stays plain. */
+    .pku-facet--on:not(.pku-facet--open) {
+      border-color: ${C.btnBlue} !important;
+    }
+    .pku-facet--on:not(.pku-facet--open) .pku-facet-btn {
+      color: ${C.btnBlue} !important;
+      font-weight: 500 !important;
     }
     /* The list is always in the DOM at full height and the block clips it, so
        growing max-height sweeps the clip edge down and each option is revealed
@@ -1309,6 +1338,10 @@ export const Timetable = css`
     .pku-tt--stale .pku-tt-grid {
       filter: blur(8px) !important;
     }
+    /* ---- out of date: the refresh, and nothing else ----
+       The blur says the numbers under it are no longer the page's; the 刷新 on
+       top of it is the whole interaction. Click-through everywhere except the
+       button, so the window can still be dragged by the greyed table. */
     .pku-tt-stale {
       position: absolute !important;
       inset: 0 !important;
@@ -1317,21 +1350,172 @@ export const Timetable = css`
       flex-direction: column !important;
       align-items: center !important;
       justify-content: center !important;
-      gap: 8px !important;
+      gap: 6px !important;
       box-sizing: border-box !important;
       padding: 20px !important;
       text-align: center !important;
       pointer-events: none !important;
     }
-    .pku-tt-stale-main {
-      font-size: 14px !important;
-      font-weight: 600 !important;
-      line-height: 1.5 !important;
-      color: ${C.text} !important;
+    .pku-tt-refresh {
+      padding: 0 !important;
+      font-family: inherit !important;
+      font-size: 22px !important;
+      font-weight: 700 !important;
+      line-height: 1.2 !important;
+      color: ${C.btnBlue} !important;
+      background: none !important;
+      border: none !important;
+      cursor: pointer !important;
+      pointer-events: auto !important;
     }
+    .pku-tt-refresh:hover { color: ${C.btnBlueHover} !important; text-decoration: underline !important; }
     .pku-tt-stale-sub {
-      font-size: 11px !important;
+      font-size: 12px !important;
       line-height: 1.5 !important;
       color: ${C.noteText} !important;
     }
+    /* Half a second of spinner on every refresh, whether or not there was
+       anything to wait for -- see TT_SPIN_MS in utils/timetable.js. */
+    .pku-tt-spin {
+      width: 22px !important;
+      height: 22px !important;
+      box-sizing: border-box !important;
+      border: 2px solid ${C.optDot} !important;
+      border-top-color: ${C.btnBlue} !important;
+      border-radius: 50% !important;
+      animation: pku-tt-spin .8s linear infinite !important;
+    }
+    @keyframes pku-tt-spin { to { transform: rotate(360deg); } }
   `
+
+/* 系统提示（会话超时）界面 */
+export const ErrorPage = css`
+    /* ---- session-timeout page ----
+       One column, centred in what is left of the viewport under the header:
+       the site's own message at a sixth of the full width, the way back, and
+       the game. No card, no shadow, no photograph -- the page is a dead end,
+       so it says one thing and gets out of the way. */
+    /* header, page, footer -- a column the height of the window, so the footer
+       sits on the very bottom however little there is above it */
+    .pku-err-page {
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 100vh !important;
+    }
+    .pku-err {
+      flex: 1 1 auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 32px !important;
+      padding: 5vh 16px !important;
+      box-sizing: border-box !important;
+      text-align: center !important;
+    }
+    /* One line, unless the window is too narrow to hold one: fit-content sizes
+       the block to the text, and the max-width is the only thing that can make
+       it wrap. */
+    .pku-err-text {
+      width: fit-content !important;
+      max-width: 90vw !important;
+      font-size: clamp(20px, 2.1vw, 40px) !important;
+      font-weight: 600 !important;
+      line-height: 1.6 !important;
+      color: ${C.text} !important;
+    }
+    /* a twentieth of the window at its narrowest, but never narrower than its
+       own label: 重新登录 is the whole point of the button */
+    .pku-err-btn {
+      min-width: 5vw !important;
+      padding: 0.9em 1.6em !important;
+      font-family: inherit !important;
+      font-size: clamp(13px, 1vw, 18px) !important;
+      font-weight: 500 !important;
+      line-height: 1.2 !important;
+      white-space: nowrap !important;
+      color: #fff !important;
+      background: ${C.btnBlue} !important;
+      border: none !important;
+      border-radius: 6px !important;
+      cursor: pointer !important;
+    }
+    .pku-err-btn:hover { background: ${C.btnBlueHover} !important; }
+    /* The stage is the space the game is given; the game itself is always the
+       600x150 the drawing assumes, blown up by a scale the page works out from
+       the window (error-page.js). The stage reserves the SCALED height, since
+       a transform does not affect layout, and clips the layout box's overflow
+       on a window too narrow for the unscaled 600. */
+    .pku-err-stage {
+      width: 100% !important;
+      display: flex !important;
+      justify-content: center !important;
+      overflow: hidden !important;
+      height: calc(150px * var(--pku-dino-scale, 1)) !important;
+    }
+    .pku-err-game {
+      position: relative !important;
+      flex: 0 0 auto !important;
+      width: 600px !important;
+      height: 150px !important;
+      transform: scale(var(--pku-dino-scale, 1)) !important;
+      transform-origin: top center !important;
+    }
+
+    /* ---- the game's own stylesheet ----
+       Verbatim from Chromium's neterror CSS (see static/dino.js), minus the
+       icon's image-set, which points at files only Chrome has. Deliberately
+       NOT marked !important: the game writes its real width and height onto
+       these elements as inline styles, and those have to win. Only the two
+       overrides at the end are ours, so the canvas sits inside .pku-err-game
+       rather than 35px below the top of the page. */
+    .icon { -webkit-user-select: none; user-select: none; display: inline-block; }
+    .hidden { display: none; }
+    .offline .runner-container {
+      height: 150px;
+      max-width: 600px;
+      overflow: hidden;
+      position: absolute;
+      top: 35px;
+      width: 44px;
+    }
+    .offline .runner-canvas {
+      height: 150px;
+      max-width: 600px;
+      opacity: 1;
+      overflow: hidden;
+      position: absolute;
+      top: 0;
+      z-index: 2;
+    }
+    .offline .controller {
+      background: rgba(247, 247, 247, .1);
+      height: 100vh;
+      left: 0;
+      position: absolute;
+      top: 0;
+      width: 100vw;
+      z-index: 1;
+    }
+    #offline-resources { display: none; }
+    /* (the .arcade-mode rules are not carried over: startDino turns that mode
+       off, since it exists to scale the game over a whole browser tab) */
+
+    /* Ours: the game lives in its own block here rather than at the top of the
+       page, and it is open at full width from the outset -- the whole strip,
+       ground line and all, centred under the message. Chrome instead starts
+       44px wide and animates open on the first jump, which works there because
+       the window is pinned to the left of a wide column; centred here, that
+       animation only drags the dino sideways. startDino skips it to match. */
+    .pku-err-game .runner-container { top: 0; width: 100%; }
+    /* The canvas is positioned with left:auto, so its static position is
+       where it WOULD have started in flow -- and this page centres its text,
+       which the game inherits. That put the canvas half a container to the
+       right, with the dino and the ground line hanging off the end. Neither is
+       a problem in Chrome, whose error page is left-aligned. Pin both. */
+    .pku-err-game { text-align: left !important; }
+    /* blown up, the sprite should read as the blocks it is drawn from rather
+       than as a smeared photograph -- the same choice Chrome's arcade mode
+       makes when it scales the game over a whole tab */
+    .pku-err-game .runner-canvas { left: 0; image-rendering: pixelated; }
+    .pku-err-game #main-content { height: 0; }`

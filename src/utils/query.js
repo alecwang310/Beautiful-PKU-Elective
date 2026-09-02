@@ -7,6 +7,7 @@
 // after. 清空条件 is left alone: clearing is exactly what that button is for.
 
 import { Q_TEXT, Q_SEL } from '../config.js';
+import { sinceLastRequest, noteRequest, isBlocked } from './net.js';
 
 export function keepQueryFields() {
   // Bound to the FORM, not to #kcfl: buildQueryForm lifts the radios out of
@@ -46,6 +47,11 @@ export function keepQueryFields() {
 // filter moves -- but a filter only re-runs a search that is already showing
 // something, so the first search stays the user's own decision.
 const QUERY_TYPING_INTERVAL = 2000;
+// Every auto-search is a full page load. Two filters flicked one after the
+// other would otherwise fire two of them a moment apart, which is the same
+// burst the site kicks a session for -- so a search that comes too soon after
+// the last request waits out the difference instead.
+const QUERY_MIN_GAP = 4000;
 export function wireQueryAutoSearch() {
   const form = document.getElementById('qyForm');
   const go = document.getElementById('b_query');
@@ -57,7 +63,19 @@ export function wireQueryAutoSearch() {
   const ready = () => !!form.querySelector('input[type=radio]:checked')
     && !!(val('courseID') || val('courseName') || val('deptID'));
   let typed = 0;
-  const fire = () => { if (ready()) go.click(); };
+  let held = 0;
+  const submit = () => {
+    if (!ready() || isBlocked()) return;
+    noteRequest();          // the navigation is a request like any other
+    go.click();
+  };
+  const fire = () => {
+    if (!ready()) return;
+    clearTimeout(held);
+    const wait = QUERY_MIN_GAP - sinceLastRequest();
+    if (wait > 0) held = setTimeout(submit, wait);
+    else submit();
+  };
 
   Q_TEXT.forEach((id) => {
     const el = document.getElementById(id);

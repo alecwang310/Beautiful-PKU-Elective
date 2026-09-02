@@ -1,10 +1,9 @@
 // ---- notifications ----
 // Each notice is a nested table row whose first cell holds warning.gif,
-// error.gif or success.gif. They are merged into one bordered box, red copy
-// turned bold black. An error card turns red and appends the operated course;
-// a success card turns green with a light-green fill.
-
-import { state } from '../state.js';
+// error.gif or success.gif. They are merged into one bordered box. The site's
+// red emphasis is turned bold black in CSS (see Noticies in layout.js), so the
+// cloned markup is left untouched. An error card turns red and appends the
+// operated course; a success card turns green with a light-green fill.
 
 export function buildNotices() {
   return collectNoticeCards(document);
@@ -45,12 +44,6 @@ export function collectNoticeCards(root, onlyOutcomes = false) {
     card.className = 'pku-notice'
       + (isError ? ' pku-notice--error' : isSuccess ? ' pku-notice--success' : '');
     [...content.childNodes].forEach((n) => card.appendChild(n.cloneNode(true)));
-    // .errmsg is the site's red emphasis -> bold
-    card.querySelectorAll('.errmsg, font[color], [style*="color"]').forEach((el) => {
-      const b = document.createElement('strong');
-      b.innerHTML = el.innerHTML;
-      el.replaceWith(b);
-    });
     cards.push(card);
 
     // remove the original row, and the wrapper row of its nested table

@@ -4,8 +4,18 @@
 // validation (setEleHref), then fetch the URL in the background and fold the
 // result back in place. 意愿值 修改 already posts via $.ajax; wrapping it only
 // keeps the visible tally in sync.
+//
+// The request goes through the same gate as everything else, marked as the
+// user's own: it jumps ahead of whatever background reading is queued and
+// waits out no delay of its own -- only for an already-open request to land,
+// so the site never sees two of ours at once. And it is never retried behind
+// the user's back: a 预选 that fails is reported with a link to click, because
+// firing the same request again is both what a 刷课机 does and a second
+// attempt at electing the same class.
 
 import { markTimetableStale } from './timetable.js';
+import { gatedFetch } from './net.js';
+import { BACKGROUND_ELECT } from '../config.js';
 import {
   readCreditInfo, reinsertRemainRandom, syncCreditInfo
 } from './table.js';
@@ -26,12 +36,13 @@ export function wireActions() {
     const orig = window.setEleHref;
     window.setEleHref = function (herfAdd, tagIdEle, courseName, classNo, index, seqNo) {
       const ok = orig.apply(this, arguments);
-      if (ok) {
-        // the user confirmed the 预选: the taken list is about to change, so
-        // the floating timetable's clash/credit marks go stale
-        markTimetableStale();
-        runElect(herfAdd.href);   // setEleHref appended &random before returning true
-      }
+      if (!ok) return false;
+      // the user confirmed the 预选: the taken list is about to change, so
+      // the floating timetable's clash/credit marks go stale
+      markTimetableStale();
+      // handed back to the site: it navigates to electCourse.do itself
+      if (!BACKGROUND_ELECT) return true;
+      runElect(herfAdd.href);     // setEleHref appended &random before returning true
       return false;               // never navigate away
     };
   };
@@ -66,19 +77,56 @@ export function wireActions() {
       : null;
     if (a && !e.defaultPrevented) markTimetableStale();
   });
+
+  // 退出 ends the session; whatever comes back is a different login, and the
+  // stored timetable was read under the old one. Flag it now, while we still
+  // have a page to hear the click on.
+  document.addEventListener('click', (e) => {
+    const out = e.target && e.target.closest
+      ? e.target.closest('a[href*="logout"]') : null;
+    if (out) markTimetableStale();
+  });
 }
 
 function runElect(url) {
-  fetch(url, { credentials: 'same-origin' })
-    .then((res) => {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.text();
-    })
-    .then((html) => applyElectResult(new DOMParser().parseFromString(html, 'text/html')))
+  gatedFetch(url, { user: true })
+    .then(({ text }) => applyElectResult(new DOMParser().parseFromString(text, 'text/html')))
     .catch((e) => {
-      console.warn('[Beautiful PKU Elective] 预选 request failed; falling back to navigation:', e);
-      location.assign(url);
+      console.warn('[Beautiful PKU Elective] 预选 request failed:', e);
+      showElectFailure(url, e);
     });
+}
+
+// A 预选 whose request never landed: say so, and hand the user the site's own
+// link. Nothing is re-sent automatically -- the elect may or may not have gone
+// through, and only the user can decide to try it again.
+function showElectFailure(url, err) {
+  const card = document.createElement('div');
+  card.className = 'pku-notice pku-notice--error';
+  const blocked = !!(err && err.blocked);
+  const line = document.createElement('div');
+  line.textContent = blocked
+    ? '预选请求被选课网站拦截，本次操作可能没有生效。请重新登录选课网站，'
+      + '并在原网站确认该课程是否已经预选。'
+    : '预选请求发送失败，本次操作可能没有生效。请点击下方链接，由选课网站自己完成这次预选。';
+  card.appendChild(line);
+  // Only worth offering while the session still works: behind a block the same
+  // link leads to the site's 系统提示 page, and re-sending an elect that may
+  // already have gone through is the user's call, not ours.
+  if (!blocked) {
+    const a = document.createElement('a');
+    a.className = 'pku-btn';
+    a.href = url;
+    a.textContent = '在选课网站中重试';
+    a.style.marginTop = '10px';
+    card.appendChild(a);
+  }
+
+  const anchor = document.querySelector('.pku-notice:last-of-type')
+    || document.querySelector('.pku-hero')
+    || document.querySelector('.pku-header');
+  if (anchor) anchor.after(card); else document.body.prepend(card);
+  card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 function applyElectResult(doc) {
